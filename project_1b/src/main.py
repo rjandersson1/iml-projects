@@ -56,6 +56,7 @@ def fit_logistic_regression(X, y):
 
 # Main function. You don't have to change this
 if __name__ == "__main__":
+    print('\n'*20)
     # Data loading
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data = pd.read_csv(os.path.join(script_dir, "../data/train.csv"))
