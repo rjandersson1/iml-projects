@@ -93,6 +93,37 @@ def average_LR_RMSE(X, y, lambdas, n_folds):
     # TODO: Enter your code here. Hint: Use functions 'fit' and 'calculate_RMSE' with training and test data
     # and fill all entries in the matrix 'RMSE_mat'
 
+
+    # Split data into folds TODO: shuffle data before folding?
+    folds = [] # array of tuples of (X', y') for each fold
+    l = 15 # length of each fold
+    for i in range(n_folds):
+        row_start = i*l
+        row_end = (i+1)*l
+        X_fold = X[row_start:row_end]
+        y_fold = y[row_start:row_end]
+        fold = (X_fold, y_fold)
+        folds.append(fold)
+
+    # Train model on 9 folds, and test on 10th
+    for i in range(n_folds):
+        X_test = folds[i][0]
+        y_test = folds[i][1]
+
+        X_train = np.concatenate([folds[k][0] for k in range(n_folds) if k != i], axis=0)
+        y_train = np.concatenate([folds[k][1] for k in range(n_folds) if k != i], axis=0)
+
+        for j in range(len(lambdas)):
+            lam = lambdas[j]
+
+            w = fit(X_train, y_train, lam) # train on 9/10 folds
+
+            rmse = calculate_RMSE(w, X_test, y_test) # test against remaining fold
+
+            RMSE_mat[i,j] = rmse
+
+
+
     avg_RMSE = np.mean(RMSE_mat, axis=0)
     assert avg_RMSE.shape == (5,)
     return avg_RMSE
