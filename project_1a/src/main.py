@@ -32,7 +32,7 @@ def fit(X, y, lam):
     weights = np.zeros((13,))
     # TODO: Enter your code here
     assert weights.shape == (13,)
-    return weightso
+    return weights
 
 
 def calculate_RMSE(w, X, y):
