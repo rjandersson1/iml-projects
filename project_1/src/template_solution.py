@@ -10,6 +10,9 @@ from sklearn.model_selection import KFold
 # any additional imports)
 # import ...
 
+
+
+
 def fit(X, y, lam):
     """
     This function receives training data points, then fits the ridge regression on this data
@@ -47,7 +50,24 @@ def calculate_RMSE(w, X, y):
     rmse: float: dim = 1, RMSE value
     """
     rmse = 0
-    # TODO: Enter your code here
+
+    # def vars
+    y_star = y # ground truth
+    y_hat = X @ w # estimated value
+
+    # sum terms
+    s = 0
+    for i in range(len(y)):
+        s += (y_hat[i] - y_star[i])**2
+    
+    # normalize
+    s = s / len(y)
+
+    # square root
+    rmse = np.sqrt(s)
+
+    print(rmse) # DEBUG
+
     assert np.isscalar(rmse)
     return rmse
 
@@ -80,6 +100,7 @@ def average_LR_RMSE(X, y, lambdas, n_folds):
 
 # Main function. You don't have to change this
 if __name__ == "__main__":
+    print('\n'*20)
     # Data loading
     script_dir = os.path.dirname(os.path.abspath(__file__))
     data = pd.read_csv(os.path.join(script_dir, "../data/train.csv"))
@@ -95,3 +116,5 @@ if __name__ == "__main__":
     avg_RMSE = average_LR_RMSE(X, y, lambdas, n_folds)
     # Save results in the required format
     np.savetxt("./results.csv", avg_RMSE, fmt="%.12f")
+
+
