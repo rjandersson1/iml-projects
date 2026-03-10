@@ -3,6 +3,7 @@
 # First, we import necessary libraries:
 import pandas as pd
 import numpy as np
+import os
 from sklearn.model_selection import KFold
 
 # Add any additional imports here (however, the task is solvable without using 
@@ -80,7 +81,8 @@ def average_LR_RMSE(X, y, lambdas, n_folds):
 # Main function. You don't have to change this
 if __name__ == "__main__":
     # Data loading
-    data = pd.read_csv("train.csv")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data = pd.read_csv(os.path.join(script_dir, "../data/train.csv"))
     y = data["y"].to_numpy()
     data = data.drop(columns="y")
     # print a few data samples
