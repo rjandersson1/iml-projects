@@ -53,7 +53,15 @@ def fit_logistic_regression(X, y):
     """
     weights = np.zeros((21,))
     X_transformed = transform_features(X)
-    # TODO: Enter your code here
+    # Steepest descent
+    nu = 0.002
+    # 1. Start
+    weights_0 = np.ones((21,))
+    # 2. Iteration
+    f = X_transformed@weights
+    l = np.log(1+np.exp(-y*f))
+    L = np.sum(l)/np.size(l)
+    # Calculate derivative
     assert weights.shape == (21,)
     return weights
 
