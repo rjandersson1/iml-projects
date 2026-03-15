@@ -3,6 +3,7 @@
 # First, we import necessary libraries:
 import numpy as np
 import pandas as pd
+import os
 
 # Add any additional imports here (however, the task is solvable without using 
 # any additional imports)
@@ -27,7 +28,11 @@ def transform_features(X):
     X_transformed: matrix of floats: dim = (700,21), transformed input with 21 features
     """
     X_transformed = np.zeros((700, 21))
-    # TODO: Enter your code here
+    X_transformed[:, 0:5] = X[:, 0:5]
+    X_transformed[:, 5:10] = X[:, 0:5]**2
+    X_transformed[:, 10:15] = np.exp(X[:, 0:5])
+    X_transformed[:, 15:20] = np.cos(X[:, 0:5])
+    X_transformed[:, 20] = np.ones(700)
     assert X_transformed.shape == (700, 21)
     return X_transformed
 
@@ -55,8 +60,10 @@ def fit_logistic_regression(X, y):
 
 # Main function. You don't have to change this
 if __name__ == "__main__":
+    print('\n'*20)
     # Data loading
-    data = pd.read_csv("train.csv")
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    data = pd.read_csv(os.path.join(script_dir, "../data/train.csv"))
     y = data["y"].to_numpy()
     data = data.drop(columns=["Id", "y"])
     # print a few data samples
