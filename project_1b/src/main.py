@@ -28,7 +28,11 @@ def transform_features(X):
     X_transformed: matrix of floats: dim = (700,21), transformed input with 21 features
     """
     X_transformed = np.zeros((700, 21))
-    # TODO: Enter your code here
+    X_transformed[:, 0:5] = X[:, 0:5]
+    X_transformed[:, 5:10] = X[:, 0:5]**2
+    X_transformed[:, 10:15] = np.exp(X[:, 0:5])
+    X_transformed[:, 15:20] = np.cos(X[:, 0:5])
+    X_transformed[:, 20] = np.ones(700)
     assert X_transformed.shape == (700, 21)
     return X_transformed
 
