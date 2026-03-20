@@ -51,17 +51,35 @@ def fit_logistic_regression(X, y):
     ----------
     weights: array of floats: dim = (21,), optimal parameters of logistic regression
     """
-    weights = np.zeros((21,))
     X_transformed = transform_features(X)
-    # Steepest descent
-    nu = 0.002
+    y = 2*y-1
+
+    # STEEPEST DESCENT
+    # Parameters
+    nu = 0.8
+    tol = 0.000000001
+    t_max = 10000000
     # 1. Start
-    weights_0 = np.ones((21,))
-    # 2. Iteration
+    # weights = np.zeros((21,)) # Worst results
+    weights = np.ones((21,))
+    # weights = np.random.uniform(-10, 10, size=21)
     f = X_transformed@weights
     l = np.log(1+np.exp(-y*f))
-    L = np.sum(l)/np.size(l)
-    # Calculate derivative
+    L = np.mean(l)
+    delta_L = L
+    t = 0
+    # 2. Iterate
+    while t < t_max and delta_L > tol:
+        delta_L = L
+        delL_delw = np.mean((-np.exp(-y*f)/(1+np.exp(-y*f))*y)[:, None]*X_transformed, axis=0)
+        weights = weights-nu*delL_delw
+        f = X_transformed@weights
+        l = np.log(1+np.exp(-y*f))
+        L = np.mean(l)
+        print(t, L)
+        delta_L = delta_L - L
+        t=t+1
+
     assert weights.shape == (21,)
     return weights
 
