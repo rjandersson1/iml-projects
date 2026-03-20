@@ -33,15 +33,16 @@ def transform_features(X):
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 data = pd.read_csv(os.path.join(script_dir, "../data/train.csv"))
-y = data["y"].to_numpy()
+y = data["y"].to_numpy().reshape(-1, 1)
 y = 2*y-1
 data = data.drop(columns=["Id", "y"])
 X = data.to_numpy()
 X_transformed = transform_features(X)
 
 weights = pd.read_csv(os.path.join(script_dir, "../results_0.02108.csv"), header=None)
-weights = weights.to_numpy()
+# weights = pd.read_csv(os.path.join(script_dir, "../results_0.03809.csv"), header=None)
+weights = weights.to_numpy().reshape(-1, 1)
 print(weights)
 
 f = X_transformed@weights
-print(np.size(y*f))
+print("Number of missclassified data points:", np.abs(np.sum((np.sign(y*f)-1)/2)))
