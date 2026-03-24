@@ -29,8 +29,7 @@ def fit(X, y, lam):
     ----------
     w: array of floats: dim = (13,), optimal parameters of ridge regression
     """
-    weights = np.zeros((13,))
-    # TODO: Enter your code here
+    weights = np.linalg.inv(X.T @ X + lam * np.eye(13)) @ X.T @ y
     assert weights.shape == (13,)
     return weights
 
@@ -66,7 +65,7 @@ def calculate_RMSE(w, X, y):
     # square root
     rmse = np.sqrt(s)
 
-    print(rmse) # DEBUG
+    # print(rmse) # DEBUG
 
     assert np.isscalar(rmse)
     return rmse
