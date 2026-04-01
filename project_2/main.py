@@ -3,6 +3,11 @@
 # First, we import necessary libraries:
 import numpy as np
 import pandas as pd
+import os
+from pathlib import Path
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 
 def load_data():
     """
@@ -18,7 +23,7 @@ def load_data():
     X_test: matrix of floats: dim = (100, ?), test input with features
     """
     # Load training data
-    train_df = pd.read_csv("train.csv")
+    train_df = pd.read_csv(os.path.join(script_dir, "train.csv"))
     
     print("Training data:")
     print("Shape:", train_df.shape)
@@ -26,7 +31,7 @@ def load_data():
     print('\n')
     
     # Load test data
-    test_df = pd.read_csv("test.csv")
+    test_df = pd.read_csv(os.path.join(script_dir, "test.csv"))
 
     print("Test data:")
     print(test_df.shape)
