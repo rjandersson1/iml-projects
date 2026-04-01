@@ -26,8 +26,10 @@ def load_data():
     # Clean training data by removing rows with NaN with linear interpolation
     # plot_df(train_df[['season', 'price_GER']])
     train_df = fill_missing(train_df)
+    train_df = enumerate_seasons(train_df)
     # plot_df(train_df[['season', 'price_GER']])
-    
+
+
     print("Training data:")
     print("Shape:", train_df.shape)
     print(train_df.head(2))
@@ -38,6 +40,7 @@ def load_data():
 
     # Clean data
     test_df = fill_missing(test_df)
+    test_df = enumerate_seasons(test_df)
 
     print("Test data:")
     print(test_df.shape)
@@ -71,6 +74,16 @@ def plot_df(df_import):
     plt.grid(True)
     plt.show()
     return plt
+
+
+# Enumerate seasons: [spring, summer, autumn, winter,....] -> [0, 1, 2, 3...]
+def enumerate_seasons(df_import):
+    df = df_import.copy()
+    for i in range(len(df_import)):
+        df.loc[i, 'season'] = i
+
+    return df
+
 
 
 # Fill NaN values with previous 
