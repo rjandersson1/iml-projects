@@ -137,8 +137,8 @@ class Model2(object): # Squared exponential (RBF) kernel
         super().__init__()
         self._x_train = None
         self._y_train = None
-        self._weigths = None
-        self._tau = None
+        self._weights = None
+        self._tau = 1.0
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
         # Define the model and fit it using (X_train, y_train)
@@ -167,24 +167,25 @@ class Model2(object): # Squared exponential (RBF) kernel
         # 2. Iterate
         while t < t_max and delta_L > tol:
             delta_L = L
-            delL_delw = (2*K.T@K@alpha-2@K.T@self._y_train)/n
+            delL_delw = (2*K.T@K@alpha-2*K.T@self._y_train)/n
             alpha = alpha-nu*delL_delw
             L = np.linalg.norm((self._y_train-K@alpha))**2/n
             print(t, L)
             delta_L = delta_L - L
             t=t+1
         # 4) Revert reparametrization
-        self._weigths = alpha
+        self._weights = alpha
 
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
         # Use the model to make predictions y_pred using test data X_test
-        n = X_test.shape[0]
-        K = np.zeros((n, n))
-        for i in range(n):
+        m = X_test.shape[0]
+        n = self._x_train.shape[0]
+        K = np.zeros((m, n))
+        for i in range(m):
             for j in range(n):
-                K[i, j] = np.exp(-np.linalg.norm((self._x_train[i,:]-self._x_train[j,:]))**2/self._tau)
-        y_pred = K@self._weigths
+                K[i, j] = np.exp(-np.linalg.norm((X_test[i,:]-self._x_train[j,:]))**2/self._tau)
+        y_pred = K@self._weights
         assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
         return y_pred
 
