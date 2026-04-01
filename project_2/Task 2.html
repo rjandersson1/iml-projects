@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Task 2</title>
+    
+    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700|Poppins:400,600,700" rel="stylesheet">
+    
+    
+
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/bootstrap-theme.min.css" rel="stylesheet" type="text/css" />
+    <link href="/static/css/custom.css" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" href="/static/css/font-awesome.min.css">
+    <link rel="shortcut icon" href="/static/img/favicon.ico">
+    <script type="text/javascript" async
+  src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+    
+  </head>
+  <body class="bgbody bodypadding">
+    
+    <script src="/static/js/jquery-1.12.4.min.js" type="text/javascript"></script>
+    <script src="/static/js/bootstrap.min.js" type="text/javascript"></script>
+    
+    
+<!-- Navigation -->
+<nav class="navbar navbar-default navbar-fixed-top navbar-inverse">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="/">IML26 Projects</a>
+    </div>
+    <div class="collapse navbar-collapse" id="navbar">
+      <ul class="nav navbar-nav">
+        <li class=""><a href="/">
+	    <i class="fa fa-home" aria-hidden="true"></i> Overview
+	  </a>
+	</li>
+	
+	
+	
+	<li class="">
+	  <a href="/task0/" class="cleanlink"><i class="fa fa-spin fa-spinner" aria-hidden="true"></i> Task 0</a>
+	</li>
+	
+	
+	
+	
+	<li class="">
+	  <a href="/task1a/" class="cleanlink"><i class="fa fa-check" aria-hidden="true"></i> Task 1a</a>
+	</li>
+	
+	
+	
+	
+	<li class="">
+	  <a href="/task1b/" class="cleanlink"><i class="fa fa-check" aria-hidden="true"></i> Task 1b</a>
+	</li>
+	
+	
+	
+	
+	<li class="active">
+	  <a href="/task2/" class="cleanlink"><i class="fa fa-spin fa-spinner" aria-hidden="true"></i> Task 2</a>
+	</li>
+	
+	
+	
+	
+	<li><a href="#"><i class="fa fa-clock-o" aria-hidden="true"></i> Task 3</a></li>
+	
+	
+	
+	
+	<li><a href="#"><i class="fa fa-clock-o" aria-hidden="true"></i> Task 4</a></li>
+	
+	
+	<li><a href="/logout"><i class="fa fa-sign-out" aria-hidden="true"></i> Logout</a></li>
+
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+      </ul>
+
+    </div><!-- /.navbar-collapse -->
+
+  </div>
+</nav>
+<!-- Main content -->
+<div class="container fill" role="main">
+
+  
+<script>
+  $(document).ready(function() {
+  // show active tab on reload
+  if (location.hash !== '') $('a[href="' + location.hash + '"]').tab('show');
+
+  // remember the hash in the URL without jumping
+  $('a[data-toggle="tab"]').on('shown.bs.tab', function(e) {
+  if(history.pushState) {
+  history.pushState(null, null, '#'+$(e.target).attr('href').substr(1));
+  } else {
+  location.hash = '#'+$(e.target).attr('href').substr(1);
+  }
+  });
+  });
+</script>
+
+<div class="jumbotron">
+  <h1  data-toc-skip><i class="fa fa-tasks " aria-hidden="true"></i> Task 2</h1>
+  <p>POWER PRICE PREDICTION</p>
+</div>
+
+
+<div class="alert alert-warning" role="alert">
+  You are in the group <i class="fa fa-users fa-fw" aria-hidden="true"></i> Ecracp consisting of <i class="fa fa-user"></i> cpirker (<a href="mailto://cpirker@student.ethz.ch">cpirker@student.ethz.ch</a>),  <i class="fa fa-user"></i> eciccirillo (<a href="mailto://eciccirillo@student.ethz.ch">eciccirillo@student.ethz.ch</a>) and  <i class="fa fa-user"></i> randersson (<a href="mailto://randersson@student.ethz.ch">randersson@student.ethz.ch</a>).
+</div>
+
+<div class="panel">
+  <!-- <div class="panel-body"> -->
+  <ul  class="nav  nav-pills nav-justified">
+    <li class="active">
+      <a href="#description" data-toggle="tab"><h4><i class="fa fa-book fa-fw fa-1x" aria-hidden="true"></i> 1. Read the task description</h4></a>
+    </li>
+    <li><a href="#submission" data-toggle="tab"><h4><i class="fa fa-laptop fa-fw fa-1x" aria-hidden="true"></i> 2. Submit solutions</h4></a>
+    </li>
+    <li><a href="#handin" data-toggle="tab"><h4><i class="fa fa-envelope fa-fw fa-1x" aria-hidden="true"></i> 3. Hand in final solution</h4></a>
+    </li>
+  </ul>
+  <!-- </div> -->
+</div>
+<div class="tab-content </i>">
+  <div class="tab-pane active" id="description">
+    <div class="panel panel-default">
+      <div class="panel-body">
+	<h2><i class="fa fa-book fa-fw" aria-hidden="true"></i> 1. Task description </h2>
+	<h4 id="introduction">Introduction</h4>
+
+<p>Applying ML approaches to real-world problems requires some extra steps in handling specific data artifacts.
+    Some common challenges you may face are missing values, an imbalance of the labels, or noise in the data distribution. These can be addressed through a specific choice of pre-processing and/or model components. </p>
+
+<p>In this task, as an illustration of a real-world problem, you are asked to predict the electricity prices in Switzerland given price information of some other countries and additional features. 
+  You will encounter typical ML workflow challenges of missing features and low predictive power in this task. </p>
+
+The following sections provide more details on the dataset, submission and evaluation.
+
+<h4>Data description</h4>
+<p>
+    <a href='/static/task2_k49am2lqi.zip' class="btn btn-primary">Download
+    handout</a></p>
+<p>In the handout for this project, you will find the following files:
+<ul>
+    <li><strong>train.csv</strong> - the training set</li>
+    <li><strong>test.csv</strong> - the test set file to make predictions on</li>
+    <li><strong>sample.csv</strong> - a sample submission file in the correct format</li>
+    <li><strong>template_solution.py</strong> - a template file that will guide you through the implementation of the solution</li>
+    <li><strong>template_solution.ipynb</strong> - a template file in jupyter notebook format that will guide you through the implementation of the solution</li>
+</ul>
+<p> You are free to use either jupyter notebook or the .py template file.</p>
+
+<p> Each line in <strong>train.csv</strong> represents one data point and consists of the following structure: </p>
+<pre>season,price_AUS,price_CHF,price_CZE,price_GER,price_ESP,price_FRA,price_UK,price_ITA,price_POL,price_SVK
+spring,,9.644027877268496,-1.6862480951361345,-1.7480763846576997,-3.666005401185653,,-1.822719793809122,-3.931031226630509,,-3.238196806151894<br>...</pre>
+
+As mentioned in the introduction, we are interested in predicting the electricity (log) prices in Switzerland (corresponds to price_CHF column), 
+given the prices in some other countries (corresponds to all columns starting with "price_" except price_CHF), 
+and additional features (corresponds to season). Note that there might be missing values in the price_CHF column as well.
+<br>
+<br>
+
+<p> <strong>test.csv</strong> is the file you submit predictions on. The file consists of the following structure: </p>
+<pre>season,price_AUS,price_CZE,price_GER,price_ESP,price_FRA,price_UK,price_ITA,price_POL,price_SVK
+spring,,0.4729846640395274,0.7079565159369821,,-1.1364407652408537,-0.5967028557351153,,3.298693142239604,1.9218859561660853<br>...</pre></pre>
+<br>
+
+<p>For your convenience, a sample solution file <strong>sample.csv</strong> is provided with the following structure: </p>
+<pre>price_CHF<br>0.045744325420884274<br>0.045744325420884274<br>0.045744325420884274<br>0.045744325420884274<br>...</pre><br>
+
+<p> <strong>template_solution.py</strong> provides a starting template structure for how you can solve the task, by filling in the TODOs in the skeleton code. 
+    It is not mandatory to use this solution template but it is recommended since it should make getting started on the task easier.
+</p>
+
+<h4> Modelling Tips </h4>
+
+<h5> Data Imputation </h5>
+
+<p> Missing data is a commonly encountered artifact in several machine learning tasks. Typical imputation strategies to deal with missing data include:
+    <ul>
+        <li> Discarding rows or columns with missing data</li>
+        <li> Replacing missing values with the corresponding mean or median</li>
+        <li> Advanced imputation strategies based on iterative model fitting.</li>
+    </ul>
+    
+    Additional resources on data imputation can be found in this <a href="https://www.kaggle.com/code/residentmario/simple-techniques-for-missing-data-imputation/notebook">kaggle notebook</a> 
+    or <a href="https://scikit-learn.org/stable/modules/impute.html">sklearn website</a>. 
+</p>
+
+<h5> Handling Categorical (Non-Numeric) Data </h5>
+
+<p> Some data in this task is categorical (non-numeric). This is a common challenge in machine learning. 
+    Some strategies on how to handle categorical data can be found in this <a href="https://www.kaggle.com/alexisbcook/categorical-variables">kaggle notebook</a> 
+    or <a href="https://scikit-learn.org/stable/modules/preprocessing.html#encoding-categorical-features">sklearn website</a>.
+
+<h5> Kernelized Regression Models </h5>
+
+<p> You saw kernelized estimators in the lecture notes. In this task you might find them useful. The core of the challenge is to pick the right kernel for the regression. Commonly used kernels are the linear (or dot product) kernel, squared exponential (or RBF) kernel, polynomial, Matern, and RationalQuadratic kernels among many others. 
+
+A probabilistic (Bayesian) equivalent of kernelized ridge regression goes by the name Gaussian processes. It provides a principled modelling paradigm with uncertainty estimates. The uncertainty component is not important for this task, however a lot of machine learning software packages implement this method in a very efficient manner and its mean prediction does the same as kernelized ridge regression. The following code block gets you started with gaussian processes in sklearn (more resources can be found <a href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.gaussian_process">here</a>)
+
+<pre><code>from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import DotProduct, RBF, Matern, RationalQuadratic
+gpr = GaussianProcessRegressor(kernel=DotProduct())
+gpr.fit(X_train, y_train)
+</code></pre>
+
+Finding the right kernel can be done in multiple ways as you saw in the lectures:
+  <ul>
+        <li> Using a validation set </li>
+        <li> Cross-validation</li>
+        <li> Maximizing the evidence of a Bayesian model. In this case, we are maximizing the total probability of the data given its generative model. This is also referred to as Bayesian model selection. More information can be found here: <a href="https://www.cse.wustl.edu/~garnett/cse515t/fall_2019/files/lecture_notes/7.pdf">Bayesian model selection - lecture notes.</a></li>
+    </ul>
+All the above methods are implemented in scikit-learn. Note that Gaussian processes implement Bayesian model selection automatically. 
+</p>
+
+<h4 id="submission-format">Submission Format</h4>
+<p>The submission file format should be the same as that of <strong>sample.csv</strong>, i.e. the file must contain a column with name price_CHF, and each row is the corresponding prediction. 
+  Please ensure that the number of predictions in your submitted file are the same as number of data points in the <strong>test.csv</strong> file. </p>
+
+<p>Furthermore, please keep in mind that as a group, you have a limited number of submissions as stated on the submissions page.</p>
+
+
+<h4 id="evaluation">Evaluation</h4>
+<p>
+    We are interested in an accurate prediction of electricity prices in Switzerland. 
+    As mentioned before, this corresponds to the price_CHF column in your submitted predictions. 
+    Your submitted predictions will be evaluated by the <i>R-squared</i> (`R^2`) metric to the true prices (here, a higher score is better). 
+</p>
+
+<p>
+    $$ 
+    R^2(\mathbf{y}^*, \mathbf{y}) = 1 - \frac{ \sum_{i=1}^N (y_i^* - y_i)^2 }{ \sum_{i=1}^N (y_i^* - \bar{y})^2}
+    $$
+</p>
+where \(\mathbf{y}^*\) denotes the ground truth values, \(\mathbf{y}\) denotes your predictions and \(\bar{y}\) denotes the average of true values \( \{y_i^*\}\).". 
+<p>To calculate the `R^2` score, we use the scikit-learn implementation:</p>
+
+<pre><code>from sklearn.metrics import r2_score
+r2_score(y_true, y_pred)
+</code></pre>
+
+<h4 id="grading_related">Grading</h4>
+
+<p>
+<strong>This is a pass — fail project and you will not receive a grade for this task. You need to pass 3 / 4 projects in the IML course to be eligible for taking the exam.</strong>
+Your algorithm will make predictions on a held out test set. For each of your submissions, a score is computed.
+
+<p> When handing in the task, you need to select which of your submissions will get graded and provide a public link to a maximum one minute long video explaining your approach.
+Make sure that we can access the link till the first of October.
+Every student has to submit an individual 1 minute long video. This has to be done <strong>individually by each member</strong> of the team.
+For generating the video link, please use the ETH <a href="https://polybox.ethz.ch/index.php/login/">polybox </a> service, upload your video there and generate a shareable link (see this <a href="https://polyboxdoc.ethz.ch/share-with-people-outside-of-eth/">documentation </a> for more detail).
+Submissions that are not handed-in, do not have a video that we can access till the first of October or have a video exceeding the one minute threshold will not be graded. </p>
+
+<p> We will compare your selected submission to our public baseline, which is visible on the public leaderboard. <strong>You pass this project if your submitted solution beats our public baseline.</strong>
+At the end of the semester, we will award one team with a certificate and prize for their performance on this task (excluding task 0). The selection criteria are based on the team’s performance on our public and private leaderboards and the creativity of their solution. The prize will be disclosed at the end of the semester.
+The private leaderboards are based on a separate test score on an undisclosed test set. You only receive feedback about your performance on the public part in the form of the public score, while the private leaderboard remains secret. The purpose of this division is to prevent overfitting to the public score. Your model should generalize well to the private part of the test set.
+The creativity of your solution will be evaluated by our TAs based on your video submission. </p>
+
+</p>
+
+<div class="alert alert-danger">
+  <i class="fa fa-exclamation-triangle fa-fw" aria-hidden="true"></i>
+  Make sure that you properly hand in the task, otherwise you will fail this task.
+</div>
+
+<h4>Plagiarism</h4>
+<p class="text-justify">
+ The use of open-source libraries is allowed and encouraged. However, we do not allow copying the work of other groups / students outside the group (including work produced by students in previous versions of this course).
+ Publishing project solutions online is not allowed and use of solutions from previous years in any capacity is considered plagiarism. Among the code and the reports, including those of previous years, we search for similar solutions / reports in order to detect plagiarism.
+ Although not strictly forbidden, we discourage the use of Github Copilot or similar code/language generation tools for writing code. We expect that if such tools are used, this is clearly stated in the video submission explaining the solution.
+ While it will have no effect on your grade or if a solution passes or fails, it may affect the awarding of prizes for best solutions.
+ We discourage these tools because we feel that the best way to understand the material is to write the code yourself referring to just the lecture material, source papers and documentation of any libraries used.
+ For the purposes of disclosing what generative AI tools you used to write code, we don’t need you to disclose using e.g. basic code autocompletion such as those used in the default setup of Sublime Text 3.
+ If we find strong evidence for plagiarism, we reserve the right to let the respective students or the entire group fail in the IML 2025 course and take further disciplinary actions.
+ By submitting the solution, you agree to abide by the plagiarism guidelines of IML 2025.
+</p>
+
+<h4>Frequently asked questions</h4>
+<h5><span class="glyphicon glyphicon-record"></span> Which programming language am I supposed to use? What tools am I allowed to use?</h5>
+<p> You are free to choose any programming language and use any software library. However, <strong>we strongly encourage you to use Python</strong>. You can use publicly available code, but you should specify the source as a comment in your code.</p>
+
+<h5><span class="glyphicon glyphicon-record"></span> What to do if I can't run the code/setup an environment on my PC?</h5>
+<p>
+  If you are having trouble running your solution locally, consider using
+  the ETH Euler cluster to run your solution. Please follow the <a href='/static/euler-guide.md'> Euler guide</a>. 
+  The setup time of using the cluster means that this option is only worth doing if you really can't run your solution locally.  
+</p>
+<h5><span class="glyphicon glyphicon-record"></span> Am I allowed to use models that were not taught in the class?</h5>
+<p>Yes. Nevertheless, the baseline was designed to be solvable based on the material taught in the class up to the second week of each task.</p>
+
+<h5><span class="glyphicon glyphicon-record"></span> In what format should I submit the code?</h5>
+<p>You can submit it as a single file (main.py, etc.; you can compress multiple files into a .zip) having max. size of 1 MB. If you submit a zip, please make sure to name your main file as <i>main.py</i> (possibly with other extension corresponding to your chosen programming language). </p>
+
+<h5><span class="glyphicon glyphicon-record"></span> Will you check / run my code?</h5>
+<p>We will check your code and compare it with other submissions. We also reserve the right to run your code. Please make sure that your code is runnable and your predictions are reproducible (fix the random seeds, etc.). Provide a readme if necessary (e.g., for installing additional libraries).</p>
+
+<h5><span class="glyphicon glyphicon-record"></span> Should I include the data in the submission?</h5>
+No. You can assume the data will be available under the path that you specify in your code.
+
+<h5><span class="glyphicon glyphicon-record"></span> Can you help me solve the task? Can you give me a hint?</h5>
+<p>As the tasks are a graded (pass/fail) part of the class, <strong>we cannot help you solve them</strong>. However, feel free to ask general questions about the course material during or after the exercise sessions.</p>
+
+<h5><span class="glyphicon glyphicon-record"></span> Can you give me a deadline extension?</h5>
+<div class="alert alert-danger">
+  <i class="fa fa-exclamation-triangle fa-fw" aria-hidden="true"></i>
+  We do not grant any deadline extensions!
+</div>
+
+<h5><span class="glyphicon glyphicon-record"></span> Can I post on Moodle as soon as I have a question?</h5>
+<p>This is highly discouraged. Remember that collaboration with other teams is prohibited. Instead,</p>
+<ul>
+<li>Read the details of the task thoroughly.</li>
+<li>Review the frequently asked questions.</li>
+<li>If there is another team that solved the task, spend more time thinking.</li>
+<li>Discuss it with your team-mates.</li>
+</ul>
+
+<h5><span class="glyphicon glyphicon-record"></span> When will I receive the private scores? And the project grades?</h5>
+<p>We will publish all grades before the exam the latest.</p>
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="submission">
+    
+    <div class="panel panel-default">
+      <div class="panel-body">
+	<h2><i class="fa fa-spin fa-spinner fa-fw" aria-hidden="true"></i> 2. Submissions <small>closes on Friday 17 Apr 2026 23:59</small></h2>
+
+	
+
+	<div class="alert alert-info" role="alert">
+	  <h3><i class="fa fa-info-circle fa-fw" aria-hidden="true"></i> Submission rules</h3>
+	  <ul>
+	    <li>For this task, you submit solutions as part of the group 'Ecracp'.</li>
+	    <li>Your group has a joint total 100 submissions. You have already used 0 submissions.</li>
+	    <li>Your group may only submit if you have submitted at most 20 submissions in the last 1 day, 0:00:00 hours. In this time span, you have submitted 0 solutions.</li>
+	    <li>Submit wisely as failed submissions count for both limits.</li>
+	    <li>Your may submit solutions until Friday 17 Apr 2026 23:59. We cannot provide deadline extensions.</li>
+	  </ul>
+	</div>
+	<hr />
+	<h3>New submission</h3>
+	
+	
+
+	<form method="POST" enctype="multipart/form-data">
+	  <input id="sf-csrf_token" name="sf-csrf_token" type="hidden" value="ImY4MGRjYjgwNDgwNzYxYjYwOGJiN2IxY2QzOWM0MzZhYmE1ZWNmNjQi.aczMKQ.g8DHabJ16x6AiaLjdJbSECd7e7c">
+
+
+	  <div class="form-group ">
+	    <label for="sf-file" class="control-label">Your submission</label>
+	    <input class="form-control" id="sf-file" name="sf-file" required type="file">
+	    
+	    <span id="helpBlock" class="help-block">Please upload a valid submission file. (Total max 1 MB)</span>
+	    
+	  </div>
+
+		<div class="form-group ">
+	    <label for="sf-source_code" class="control-label">Your code</label>
+	    <input class="form-control" id="sf-source_code" name="sf-source_code" required type="file">
+	    
+	    <span id="helpBlock" class="help-block">Please upload a source code file (.py, .zip, etc.; Total max 1 MB).</span>
+	    
+	  </div>
+
+	  <div class="form-group ">
+	    <label for="sf-description" class="control-label">Description</label>
+	    <input class="form-control" id="sf-description" maxlength="50" minlength="1" name="sf-description" type="text" value="">
+	    
+	    <span id="helpBlock" class="help-block">Please provide a description of your submission.</span>
+	    
+	  </div>
+	  <input class="btn btn-primary" id="sf-submit" name="sf-submit" type="submit" value="Add submission">
+	</form>
+
+	
+
+
+	
+	<hr />
+	<h3>Your submissions <small><a href='javascript:window.location.reload(true)'>refresh</a></small></h3>
+
+	<div style="max-height:400px;overflow:auto;">
+	  <table class="table table-striped">
+	    <thead>
+	      <tr>
+		<th>#</th>
+		<th>Filename</th>
+		<th>Source Code</th>
+		<th>Description</th>
+		<th>Author</th>
+		<th>Date</th>
+		<th>Status</th>
+		<th>Public score</th>
+        
+		<th>Handin</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	      
+	    </tbody>
+	  </table>
+	</div>
+	<hr />
+	<h3>Public leaderboard <small><a href='javascript:window.location.reload(true)'>refresh</a></small></h3>
+
+	<div style="max-height:400px;overflow:auto;">
+	  <table class="table table-striped table-condensed">
+	    <thead>
+	      <tr>
+		<th>#</th>
+		<th>Group name</th>
+		<th>Score</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	      
+	      <tr class="success">
+		<th>1</th>
+		<td>Etf</td>
+		<td>0.9419677364662453</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>2</th>
+		<td>Cookiebyte</td>
+		<td>0.9189418603834172</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>3</th>
+		<td>Sbrurok</td>
+		<td>0.9166962322929776</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>4</th>
+		<td>Codebusters</td>
+		<td>0.9153177116830661</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>5</th>
+		<td>Solocoding</td>
+		<td>0.9146615214970777</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>6</th>
+		<td>Halfiron</td>
+		<td>0.9012530082669631</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>7</th>
+		<td>Imlbcb</td>
+		<td>0.9011451906074416</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>8</th>
+		<td>Strawhats</td>
+		<td>0.8949170306526694</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>9</th>
+		<td>Clankercoders</td>
+		<td>0.8939358332371281</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>10</th>
+		<td>Qec</td>
+		<td>0.8911375624030639</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>11</th>
+		<td>Hhhhhhhhhh</td>
+		<td>0.8909683076858697</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>12</th>
+		<td>Mustbethewater</td>
+		<td>0.8908160489603412</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>13</th>
+		<td>Mrmo</td>
+		<td>0.8898426276455148</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>14</th>
+		<td>Joenssonligan</td>
+		<td>0.8883303107121454</td>
+	      </tr>
+	      
+	      <tr class="info">
+		<th>15</th>
+		<td>baseline</td>
+		<td>0.8876661441994929</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>16</th>
+		<td>Thegaeng</td>
+		<td>0.8866166771215809</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>17</th>
+		<td>Guangdang</td>
+		<td>0.8861637561112072</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>18</th>
+		<td>Pci</td>
+		<td>0.8852688537523743</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>19</th>
+		<td>Statsmastermind</td>
+		<td>0.8815137932350612</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>20</th>
+		<td>Armeschlucker</td>
+		<td>0.8798052064095034</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>21</th>
+		<td>Pizzaepasta</td>
+		<td>0.8772638606508483</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>22</th>
+		<td>Catapult</td>
+		<td>0.8755838368370852</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>23</th>
+		<td>Tonnoescipolla</td>
+		<td>0.8680403812696867</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>24</th>
+		<td>Mlpeleton</td>
+		<td>0.8661685401542375</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>25</th>
+		<td>Bruteforcers</td>
+		<td>0.8611555934174397</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>26</th>
+		<td>Pmj</td>
+		<td>0.8608002246203295</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>27</th>
+		<td>Owo</td>
+		<td>0.8585827092302333</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>28</th>
+		<td>Sixseven</td>
+		<td>0.8553618282743822</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>29</th>
+		<td>Reefmonkees</td>
+		<td>0.833828848582158</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>30</th>
+		<td>Imlprojecttwo</td>
+		<td>0.8096619100766387</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>31</th>
+		<td>Firefox</td>
+		<td>0.762424271965172</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>32</th>
+		<td>Toopredictable</td>
+		<td>0.7505983223452581</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>33</th>
+		<td>Ramonrunners</td>
+		<td>0.7505143557737731</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>34</th>
+		<td>Pts</td>
+		<td>0.7393703277128054</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>35</th>
+		<td>Andichite</td>
+		<td>0.6859897677675448</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>36</th>
+		<td>Clusterduck</td>
+		<td>0.6805563246853115</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>37</th>
+		<td>Nonconvexhell</td>
+		<td>0.6487634513282514</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>38</th>
+		<td>Mlenjoyers</td>
+		<td>0.5931117110585329</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>39</th>
+		<td>Kofgang</td>
+		<td>0.5321842247990145</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>40</th>
+		<td>Asa</td>
+		<td>0.3932055981350996</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>41</th>
+		<td>Temporarygroup</td>
+		<td>0.12743029840050846</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>42</th>
+		<td>Abc</td>
+		<td>0.1095235065011283</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>43</th>
+		<td>Droogs</td>
+		<td>-0.13507297304398014</td>
+	      </tr>
+	      
+	      <tr class="info">
+		<th>44</th>
+		<td>sample</td>
+		<td>-0.15336803670818888</td>
+	      </tr>
+	      
+	      <tr class="">
+		<th>45</th>
+		<td>Whitemonster</td>
+		<td>-0.7998700511263077</td>
+	      </tr>
+	      
+	    </tbody>
+	  </table>
+	</div>
+      </div>
+    </div>
+  </div>
+  <div class="tab-pane" id="handin">
+    <div class="panel panel-default">
+      <div class="panel-body">
+	<h2><i class="fa fa-spin fa-spinner fa-fw" aria-hidden="true"></i> 3.
+		Handin
+		<small>closes on Friday 17 Apr 2026 23:59</small>
+	</h2>
+
+		  <div class="alert alert-info" role="alert">
+			  <h3><i class="fa fa-info-circle fa-fw" aria-hidden="true"></i> How to obtain points</h3>
+			  To obtain points for this task, you have to <b>individually</b> hand in the task as follows:
+			  <ul class="">
+				  <li>You need to select one of your group's submissions for grading. You will only be graded (pass / fail) on that submission.
+				  </li>
+				  <li>You have to submit a short video on the approach that you have used. <b>Each student has to
+					  individually create their own video and you are not allowed to share the video with
+					  your other group members.</b></li>
+			  </ul>
+			  If you do not properly hand in the task, you will fail the task.
+		  </div>
+		  <div class="alert alert-danger">
+			  <i class="fa fa-exclamation-triangle fa-fw" aria-hidden="true"></i>
+			  Please double check that your handin was successful by refreshing the page after pressing the hand in
+			  button!
+		  </div>
+
+	<hr />
+	<h3>Current status</h3>
+	
+	<div class="alert alert-danger" role="alert">
+	  <i class="fa fa-exclamation-triangle fa-fw" aria-hidden="true"></i>You have not finished handing in the task yet and would currently fail the task.
+	</div>
+	
+	<div class="form-group has-error">
+	  <label class="control-label"> Submission selected for grading</label>
+	  <input class="form-control" type="text" placeholder="n/a" readonly>
+			<p class="help-block">You may select a submission to be graded (pass / fail) under "Your submissions".</p>
+	</div>
+	<div class="form-group has-error">
+	  <label class="control-label"> Current video report URL</label>
+	  <textarea class="form-control" type="text" rows=1 placeholder="n/a" readonly></textarea>
+	  <p class="help-block">You may enter a URL to your video below.</p>
+	</div>
+    
+
+
+	<hr />
+	<h3>New video report URL</h3>
+	
+	<form method="POST"  enctype="multipart/form-data">
+	  <input id="hf-csrf_token" name="hf-csrf_token" type="hidden" value="ImY4MGRjYjgwNDgwNzYxYjYwOGJiN2IxY2QzOWM0MzZhYmE1ZWNmNjQi.aczMKQ.g8DHabJ16x6AiaLjdJbSECd7e7c">
+	  <div class="form-group ">
+	    <label for="hf-description" class="control-label">New video report URL</label>
+	    <input class="form-control" id="hf-description" name="hf-description" required rows="1" type="text" value="">
+	    
+	    <span id="helpBlock" class="help-block">Please provide a public link of a video explaining your solution. The video must not be longer than one minute and must be hosted on Polybox.</span>
+	    
+	  </div>
+	  <div class="">
+	    <div class="checkbox">
+	      <label for="hf-contributed">
+		<input id="hf-contributed" name="hf-contributed" required type="checkbox" value="y">
+		I hereby confirm that I have contributed to the work of my team.
+	      </label>
+	    </div>
+	  </div>
+	  <div class="">
+	    <div class="checkbox">
+	      <label for="hf-videocheck">
+		<input id="hf-videocheck" name="hf-videocheck" required type="checkbox" value="y">
+		The video link will be publicly accessible on the first of February and is not longer than one minute.
+	      </label>
+	    </div>
+	  </div>
+	  <div class="">
+	    <div class="checkbox">
+	      <label for="hf-plagiarism">
+		<input id="hf-plagiarism" name="hf-plagiarism" required type="checkbox" value="y">
+		I hereby confirm that I am the sole author of the video above
+	      </label>
+	    </div>
+	  </div>
+	  <span id="helpBlock" class="help-block">Note that the hand-in button will only appear once you have selected a submission for grading (under submit solutions)</span>
+	  
+	</form>
+	
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </body>
+
+</html>
