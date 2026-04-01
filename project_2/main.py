@@ -127,8 +127,8 @@ def fill_missing(df_import):
     return df
 
 class Model(object):
-    def __init__(self):
-        super().__init__()
+    def _init_(self):
+        super()._init_()
         self._x_train = None
         self._y_train = None
         self.model = None
@@ -138,9 +138,10 @@ class Model(object):
         self._x_train = X_train
         self._y_train = y_train
 
-        kernel = (ConstantKernel(1.0, (1e-3, 1e3)) * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + 
-              DotProduct(sigma_0=1.0, sigma_0_bounds=(1e-3, 1e2)) +
-              WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-5, 1e-1)))
+        kernel = (
+            RBF(length_scale=10.0, length_scale_bounds=(1, 1e3)) + # Force a longer scale
+            WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1.0)) # Account for noise
+        )
 
         self.model = GaussianProcessRegressor(
             kernel=kernel,
@@ -180,30 +181,6 @@ class Model(object):
         plt.legend()
         plt.grid(True)
         plt.show()
-        
-    # def cross_validate_model(X_train, y_train, n_splits=5):
-    #     from sklearn.model_selection import KFold
-    #     from sklearn.metrics import r2_score
-
-    #     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-    #     scores = []
-
-    #     for train_idx, val_idx in kf.split(X_train):
-    #         X_tr, X_val = X_train[train_idx], X_train[val_idx]
-    #         y_tr, y_val = y_train[train_idx], y_train[val_idx]
-
-    #         model = Model()
-    #         model.fit(X_tr, y_tr)
-
-    #         y_pred = model.predict(X_val)
-
-    #         score = r2_score(y_val, y_pred)
-    #         scores.append(score)
-
-    #     print("CV R2 scores:", scores)
-    #     print("Mean CV R2:", np.mean(scores))
-
-    #     return scores
 
 class Model2(object): # Squared exponential (RBF) kernel
     def __init__(self):
