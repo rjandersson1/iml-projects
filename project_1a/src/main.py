@@ -89,7 +89,6 @@ def average_LR_RMSE(X, y, lambdas, n_folds):
     """
     RMSE_mat = np.zeros((n_folds, len(lambdas)))
 
-    # Split data into folds TODO: shuffle data before folding?
     folds = [] # array of tuples of (X', y') for each fold
     l = 15 # length of each fold
     for i in range(n_folds):
