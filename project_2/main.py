@@ -107,6 +107,7 @@ class Model(object):
         super().__init__()
         self._x_train = None
         self._y_train = None
+        self._weigths = None
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
         #TODO: Define the model and fit it using (X_train, y_train)
