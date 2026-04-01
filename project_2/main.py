@@ -138,9 +138,10 @@ class Model(object):
         self._x_train = X_train
         self._y_train = y_train
 
-        kernel = (ConstantKernel(1.0, (1e-3, 1e3)) * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + 
-              DotProduct(sigma_0=1.0, sigma_0_bounds=(1e-3, 1e2)) +
-              WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-5, 1e-1)))
+        kernel = (
+            ConstantKernel(1.0, (1e-1, 1e2)) * RBF(length_scale=10.0, length_scale_bounds=(3, 1e3)) + # Force a longer scale
+            WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1.0)) # Account for noise
+        )
 
         self.model = GaussianProcessRegressor(
             kernel=kernel,
