@@ -80,7 +80,7 @@ def plot_df(df_import):
 def enumerate_seasons(df_import):
     df = df_import.copy()
     for i in range(len(df_import)):
-        df.loc[i, 'season'] = i
+        df.loc[i, 'years'] = i
 
     return df
 
