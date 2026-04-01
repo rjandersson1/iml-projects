@@ -133,6 +133,23 @@ class Model(object):
         assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
         return y_pred
 
+class Model2(object): # Squared exponential (RBF) kernel
+    def __init__(self):
+        super().__init__()
+        self._x_train = None
+        self._y_train = None
+
+    def fit(self, X_train: np.ndarray, y_train: np.ndarray):
+        #TODO: Define the model and fit it using (X_train, y_train)
+        self._x_train = X_train
+        self._y_train = y_train
+
+    def predict(self, X_test: np.ndarray) -> np.ndarray:
+        y_pred=np.zeros(X_test.shape[0])
+        #TODO: Use the model to make predictions y_pred using test data X_test
+        assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
+        return y_pred
+
 # Main function. You don't have to change this
 if __name__ == "__main__":
     # Data loading
