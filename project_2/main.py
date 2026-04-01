@@ -80,7 +80,7 @@ def plot_df(df_import):
 def enumerate_seasons(df_import):
     df = df_import.copy()
     for i in range(len(df_import)):
-        df.loc[i, 'years'] = i
+        df.loc[i, 'season'] = i
 
     return df
 
@@ -120,7 +120,6 @@ class Model(object):
         super().__init__()
         self._x_train = None
         self._y_train = None
-        self._weigths = None
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
         #TODO: Define the model and fit it using (X_train, y_train)
@@ -138,15 +137,54 @@ class Model2(object): # Squared exponential (RBF) kernel
         super().__init__()
         self._x_train = None
         self._y_train = None
+        self._weigths = None
+        self._tau = None
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
-        #TODO: Define the model and fit it using (X_train, y_train)
+        # Define the model and fit it using (X_train, y_train)
+        # Training data and size
         self._x_train = X_train
         self._y_train = y_train
+        n = self._x_train.shape[0]
+        # 1) Reparametrization
+        alpha = np.zeros(n)
+        # 2) Kernelization
+        K = np.zeros((n, n))
+        for i in range(n):
+            for j in range(n):
+                K[i, j] = np.exp(-np.linalg.norm((self._x_train[i,:]-self._x_train[j,:]))**2/self._tau)
+        # 3) Compute
+        # STEEPEST DESCENT
+        # Parameters
+        nu = 0.8
+        tol = 0.000000001
+        t_max = 10000000
+        # 1. Start
+        # alpha = np.zeros(self._x_train.shape[0])
+        L = np.linalg.norm((self._y_train-K@alpha))**2/n
+        delta_L = L
+        t = 0
+        # 2. Iterate
+        while t < t_max and delta_L > tol:
+            delta_L = L
+            delL_delw = (2*K.T@K@alpha-2@K.T@self._y_train)/n
+            alpha = alpha-nu*delL_delw
+            L = np.linalg.norm((self._y_train-K@alpha))**2/n
+            print(t, L)
+            delta_L = delta_L - L
+            t=t+1
+        # 4) Revert reparametrization
+        self._weigths = alpha
+
 
     def predict(self, X_test: np.ndarray) -> np.ndarray:
-        y_pred=np.zeros(X_test.shape[0])
-        #TODO: Use the model to make predictions y_pred using test data X_test
+        # Use the model to make predictions y_pred using test data X_test
+        n = X_test.shape[0]
+        K = np.zeros((n, n))
+        for i in range(n):
+            for j in range(n):
+                K[i, j] = np.exp(-np.linalg.norm((self._x_train[i,:]-self._x_train[j,:]))**2/self._tau)
+        y_pred = K@self._weigths
         assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
         return y_pred
 
@@ -154,7 +192,9 @@ class Model2(object): # Squared exponential (RBF) kernel
 if __name__ == "__main__":
     # Data loading
     X_train, y_train, X_test = load_data()
-    model = Model()
+    # model = Model()
+    model = Model2()
+    model._tau = 0.001
     # Use this function to fit the model
     model.fit(X_train=X_train, y_train=y_train)
     # Use this function for inference
