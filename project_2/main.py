@@ -3,6 +3,9 @@
 # First, we import necessary libraries:
 import numpy as np
 import pandas as pd
+import os
+
+script_dir = os.path.dirname(os.path.abspath(__file__))
 
 def load_data():
     """
@@ -18,16 +21,12 @@ def load_data():
     X_test: matrix of floats: dim = (100, ?), test input with features
     """
     # Load training data
-<<<<<<< Updated upstream
-    train_df = pd.read_csv("train.csv")
-=======
     train_df = pd.read_csv(os.path.join(script_dir, "train.csv"))
 
     # Clean training data by removing rows with NaN with linear interpolation
     # plot_df(train_df[['season', 'price_GER']])
     train_df = fill_missing(train_df)
     # plot_df(train_df[['season', 'price_GER']])
->>>>>>> Stashed changes
     
     print("Training data:")
     print("Shape:", train_df.shape)
@@ -35,7 +34,7 @@ def load_data():
     print('\n')
     
     # Load test data
-    test_df = pd.read_csv("test.csv")
+    test_df = pd.read_csv(os.path.join(script_dir, "test.csv"))
 
     # Clean data
     test_df = fill_missing(test_df)
