@@ -4,6 +4,9 @@
 import numpy as np
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import ConstantKernel, DotProduct, ExpSineSquared, RBF, WhiteKernel
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -46,13 +49,17 @@ def load_data():
     print(test_df.shape)
     print(test_df.head(2))
 
-    X_train = np.zeros_like(train_df.drop(['price_CHF'],axis=1))
-    y_train = np.zeros_like(train_df['price_CHF'])
-    X_test = np.zeros_like(test_df)
+    X_train = train_df.drop(['price_CHF'], axis=1).values
+    y_train = train_df['price_CHF'].values
+    X_test = test_df.values
 
+    print("X_train sample:")
+    print(X_train[:5])
+    
     assert (X_train.shape[1] == X_test.shape[1]) and (X_train.shape[0] == y_train.shape[0]) and (X_test.shape[0] == 100), "Invalid data shape"
     return X_train, y_train, X_test
 
+    
 
 # Plot df
 def plot_df(df_import):
@@ -79,9 +86,13 @@ def plot_df(df_import):
 # Enumerate seasons: [spring, summer, autumn, winter,....] -> [0, 1, 2, 3...]
 def enumerate_seasons(df_import):
     df = df_import.copy()
-    for i in range(len(df_import)):
-        df.loc[i, 'season'] = i
-
+    season_map = {
+        'spring': 0,
+        'summer': 1,
+        'autumn': 2,
+        'winter': 3
+    }
+    df['season'] = df['season'].map(season_map).astype(float)
     return df
 
 
@@ -120,17 +131,79 @@ class Model(object):
         super().__init__()
         self._x_train = None
         self._y_train = None
+        self.model = None
 
     def fit(self, X_train: np.ndarray, y_train: np.ndarray):
         #TODO: Define the model and fit it using (X_train, y_train)
         self._x_train = X_train
         self._y_train = y_train
 
+        kernel = (ConstantKernel(1.0, (1e-3, 1e3)) * RBF(length_scale=1.0, length_scale_bounds=(1e-2, 1e2)) + 
+              DotProduct(sigma_0=1.0, sigma_0_bounds=(1e-3, 1e2)) +
+              WhiteKernel(noise_level=1e-3, noise_level_bounds=(1e-5, 1e-1)))
+
+        self.model = GaussianProcessRegressor(
+            kernel=kernel,
+            alpha=1e-6,
+            normalize_y=True,
+            n_restarts_optimizer=10
+        )
+        self.model.fit(X_train, y_train)
+
     def predict(self, X_test: np.ndarray) -> np.ndarray:
-        y_pred=np.zeros(X_test.shape[0])
-        #TODO: Use the model to make predictions y_pred using test data X_test
+        y_pred = self.model.predict(X_test)
+        y_pred = np.asarray(y_pred).reshape(-1)
         assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
         return y_pred
+    
+    def plot_fit(self):
+        if self.model is None:
+            raise ValueError("Model has not been fitted yet.")
+
+        y_mean, y_std = self.model.predict(self._x_train, return_std=True)
+
+        x_axis = np.arange(len(self._y_train))
+
+        plt.figure(figsize=(12, 6))
+        plt.plot(x_axis, self._y_train, 'k.', markersize=4, label='Training data')
+        plt.plot(x_axis, y_mean, label='GP mean prediction')
+        plt.fill_between(
+            x_axis,
+            y_mean - 1.96 * y_std,
+            y_mean + 1.96 * y_std,
+            alpha=0.2,
+            label='95% confidence interval'
+        )
+        plt.xlabel("Training index")
+        plt.ylabel("price_CHF")
+        plt.title("Gaussian Process fit on training data")
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+        
+    # def cross_validate_model(X_train, y_train, n_splits=5):
+    #     from sklearn.model_selection import KFold
+    #     from sklearn.metrics import r2_score
+
+    #     kf = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+    #     scores = []
+
+    #     for train_idx, val_idx in kf.split(X_train):
+    #         X_tr, X_val = X_train[train_idx], X_train[val_idx]
+    #         y_tr, y_val = y_train[train_idx], y_train[val_idx]
+
+    #         model = Model()
+    #         model.fit(X_tr, y_tr)
+
+    #         y_pred = model.predict(X_val)
+
+    #         score = r2_score(y_val, y_pred)
+    #         scores.append(score)
+
+    #     print("CV R2 scores:", scores)
+    #     print("Mean CV R2:", np.mean(scores))
+
+    #     return scores
 
 class Model2(object): # Squared exponential (RBF) kernel
     def __init__(self):
@@ -156,9 +229,9 @@ class Model2(object): # Squared exponential (RBF) kernel
         # 3) Compute
         # STEEPEST DESCENT
         # Parameters
-        nu = 0.8
-        tol = 0.000000001
-        t_max = 10000000
+        nu = 0.7
+        tol = 0.00000001
+        t_max = 100000
         # 1. Start
         # alpha = np.zeros(self._x_train.shape[0])
         L = np.linalg.norm((self._y_train-K@alpha))**2/n
@@ -193,16 +266,22 @@ class Model2(object): # Squared exponential (RBF) kernel
 if __name__ == "__main__":
     # Data loading
     X_train, y_train, X_test = load_data()
+    # # Cross validation
+    # # cross_validate_model(X_train, y_train)
     # model = Model()
+    # # Use this function to fit the model
+    # model.fit(X_train=X_train, y_train=y_train)
+    # # Use this function to visualize the fit of the model on the training data
+    # model.plot_fit()
+    # # Use this function for inference
+    # y_pred = model.predict(X_test)
+    # MODEL 2
     model = Model2()
-    model._tau = 0.001
-    # Use this function to fit the model
+    model._tau = 1
     model.fit(X_train=X_train, y_train=y_train)
-    # Use this function for inference
     y_pred = model.predict(X_test)
     # Save results in the required format
     dt = pd.DataFrame(y_pred) 
     dt.columns = ['price_CHF']
     dt.to_csv('results.csv', index=False)
     print("\nResults file successfully generated!")
-
