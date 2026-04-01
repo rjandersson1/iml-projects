@@ -4,10 +4,8 @@
 import numpy as np
 import pandas as pd
 import os
-from pathlib import Path
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 def load_data():
     """
@@ -24,6 +22,11 @@ def load_data():
     """
     # Load training data
     train_df = pd.read_csv(os.path.join(script_dir, "train.csv"))
+
+    # Clean training data by removing rows with NaN with linear interpolation
+    # plot_df(train_df[['season', 'price_GER']])
+    train_df = fill_missing(train_df)
+    # plot_df(train_df[['season', 'price_GER']])
     
     print("Training data:")
     print("Shape:", train_df.shape)
@@ -33,22 +36,71 @@ def load_data():
     # Load test data
     test_df = pd.read_csv(os.path.join(script_dir, "test.csv"))
 
+    # Clean data
+    test_df = fill_missing(test_df)
+
     print("Test data:")
     print(test_df.shape)
     print(test_df.head(2))
 
-    # Dummy initialization of the X_train, X_test and y_train
-    # TODO: Depending on how you deal with the non-numeric data, you may want to 
-    # modify/ignore the initialization of these variables   
     X_train = np.zeros_like(train_df.drop(['price_CHF'],axis=1))
     y_train = np.zeros_like(train_df['price_CHF'])
     X_test = np.zeros_like(test_df)
 
-    # TODO: Perform data preprocessing, imputation and extract X_train, y_train and X_test
-
     assert (X_train.shape[1] == X_test.shape[1]) and (X_train.shape[0] == y_train.shape[0]) and (X_test.shape[0] == 100), "Invalid data shape"
     return X_train, y_train, X_test
 
+
+# Plot df
+def plot_df(df_import):
+
+    # Data format: 
+    # x: ['season': ['spring','summer','autumn','winter','spring',...]
+    # y: ['price_XXX': [<float>, <float>, <float>, <float>, <float>, ...]]
+        # each XXX corresponds to a different country (and column) and should be plotted as a different line in the same plot. You can use the column names to identify which country each line corresponds to.
+    import matplotlib.pyplot as plt
+
+    plt.figure(figsize=(12, 6))
+    x_axis = range(len(df_import))
+    for col in df_import.columns:
+        if col != 'season':
+            plt.plot(x_axis, df_import[col], marker='o', label=col)
+    plt.xlabel('Time (all rows)')
+    plt.ylabel('Price')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+    return plt
+
+
+# Fill NaN values with previous 
+def fill_missing(df_import):
+    df = df_import.copy()
+
+    for col in df.columns:
+        for i in range(len(df)):
+            if pd.isna(df.loc[i, col]):
+                # If first row, fill with next non-NaN value
+                if i == 0:
+                    for j in range(i+1, len(df)):
+                        if not pd.isna(df.loc[j, col]):
+                            df.loc[i, col] = df.loc[j, col]
+                            break
+                else:
+                    # Fill NaN with linear interp between previous and next non-NaN values
+                    prev_value = df.loc[i-1, col]
+                    next_value = None
+                    for j in range(i+1, len(df)):
+                        if not pd.isna(df.loc[j, col]):
+                            next_value = df.loc[j, col]
+                            break
+                    if next_value is not None:
+                        if pd.isna(prev_value):
+                            prev_value = next_value
+                        df.loc[i, col] = (prev_value + next_value) / 2
+                    else:
+                        df.loc[i, col] = prev_value
+    return df
 
 class Model(object):
     def __init__(self):
