@@ -74,6 +74,10 @@ def load_data(**kwargs):
     train_data_label = train_data.clone()
     train_data_input = train_data.clone()
 
+    # From task description: Given an image of dimensions (28, 28) we set the center 8x8 pixels to black, i.e. mask them
+    # train_data_input: torch.Size([60000, 1, 28, 28])
+    train_data_input[:, :, 10:18, 10:18] = 0
+
     # Visualize the training data if needed
     # Set to False if you don't want to save the images
     if True:
@@ -268,11 +272,11 @@ def main():
     # Load the data
     train_data_input, train_data_label, test_data_input = load_data()
     # Train the model
-    model = training(train_data_input, train_data_label)
+    # model = training(train_data_input, train_data_label)
 
     # Test the model (this also generates the submission file)
     # The name of the submission file is submit_this_test_data_output.npz
-    testing(model, test_data_input)
+    # testing(model, test_data_input)
 
     return None
 
