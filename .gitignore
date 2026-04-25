@@ -1,4 +1,5 @@
 __pycache__/
+elena_env/
 *.pyc
 .ipynb_checkpoints/
 .env
