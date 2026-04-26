@@ -67,10 +67,6 @@ def load_data(**kwargs):
     test_data_input = torch.tensor(test_data_input, dtype=torch.float32)
 
     ########################################
-    # TODO: Given the original training images, create the input images and the
-    # label images to train your model. 
-    # Replace the two placholder lines below (which currently just copy the
-    # training data) with your own implementation.
     train_data_label = train_data.clone()
     train_data_input = train_data.clone()
 
@@ -112,38 +108,22 @@ def training(train_data_input, train_data_label, **kwargs):
     Returns:
     - model: torch.nn.Module
     """
-    model = Model()
-    model.train()
-    model.to(device)
+    model = Model()     # Initialize the model (class: Model, subclass of torch.nn.Module).
+    model.train()       # Set the module in training mode. Switch off with model.eval().
+    model.to(device)    # Sends model to device (GPU/CPU).
 
-    # TODO: Dummy criterion - change this to the correct loss function
-    # https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion = lambda x, y: torch.mean((x))
-    # TODO: Dummy optimizer - change this to a more suitable optimizer
-    optimizer = torch.optim.SGD(model.parameters())
+    criterion = torch.nn.MSELoss()                              # Loss function.
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)    # Optimizer.
 
-    # TODO: Correctly setup the dataloader - the below is just a placeholder
-    # Also consider that you might not want to use the entire dataset for
-    # training alone
-    # (batch_size needs to be changed)
-    batch_size = 1
-    dataset = TensorDataset(train_data_input, train_data_label)
-    # Consider the shuffle parameter and other parameters of the DataLoader
-    # class (see
-    # https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
-    data_loader = DataLoader(dataset, batch_size=batch_size)
+    batch_size = 32                                                         # Batch size.
+    dataset = TensorDataset(train_data_input, train_data_label)             # Dataset. tuple: (x, y), x: train features, y: train labels. TensorDataset: Dataset wrapping tensors.
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
 
-    # Training loop
-    # TODO: Modify the training loop in case you need to
-
-    # TODO: The value of n_epochs is just a placeholder and likely needs to be
-    # changed
-    n_epochs = 1
-
+    n_epochs = 30
     for epoch in range(n_epochs):
         for x, y in tqdm(
             data_loader, desc=f"Training Epoch {epoch}", leave=False
-        ):
+        ): # tqdm() shows a progress bar. Loop: n=batch_size gradient descent steps per epoch.
             x, y = x.to(device), y.to(device)
             optimizer.zero_grad()
             output = model(x)
@@ -156,9 +136,9 @@ def training(train_data_input, train_data_label, **kwargs):
     return model
 
 
-# TODO: define a model. Here, a basic MLP model is defined. You can completely
+# TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
 # change this model - and are encouraged to do so.
-class Model(nn.Module):
+class Model(nn.Module): # subclass of PyTorch class "Module" https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html
     """
     Implement your model here.
     """
@@ -168,7 +148,14 @@ class Model(nn.Module):
         The constructor of the model.
         """
         super().__init__()
-        self.fc = nn.Linear(784, 784)
+        self.fc = nn.Sequential(
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU()
+        )
 
     def forward(self, x):
         """
@@ -181,7 +168,6 @@ class Model(nn.Module):
         # Flatten the image in the last two dimensions
         x = x.view(x.shape[0], -1)
         x = self.fc(x)
-        x = F.relu(x)
         # Reshape the image to the original shape
         x = x.view(x.shape[0], 1, 28, 28)
         return x
@@ -209,7 +195,7 @@ def testing(model, test_data_input):
         # TODO: You can increase or decrease this batch size depending on your
         # memory requirements of your computer / model
         # This will not affect the performance of the model and your score
-        batch_size = 64
+        batch_size = 32
         for i in tqdm(
             range(0, test_data_input.shape[0], batch_size),
             desc="Predicting test output",
@@ -272,11 +258,11 @@ def main():
     # Load the data
     train_data_input, train_data_label, test_data_input = load_data()
     # Train the model
-    # model = training(train_data_input, train_data_label)
+    model = training(train_data_input, train_data_label)
 
     # Test the model (this also generates the submission file)
     # The name of the submission file is submit_this_test_data_output.npz
-    # testing(model, test_data_input)
+    testing(model, test_data_input)
 
     return None
 
