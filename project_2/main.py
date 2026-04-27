@@ -1,263 +1,273 @@
-# This serves as a template which will guide you through the implementation of this task.  It is advised
-# to first read the whole template and get a sense of the overall structure of the code before trying to fill in any of the TODO gaps
-# First, we import necessary libraries:
+from pathlib import Path
+
 import numpy as np
-import pandas as pd
-import os
+from tqdm import tqdm
 import matplotlib.pyplot as plt
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import ConstantKernel, DotProduct, ExpSineSquared, RBF, WhiteKernel
+import torch
+from torch.utils.data import DataLoader, TensorDataset
+import torch.nn as nn
+import torch.nn.functional as F
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
+"""
+README FIRST
 
-def load_data():
+The below code is a template for the solution. You can change the code according
+to your preferences, but the testing function has to save the output of your 
+model on the test data as it does in this template. This output must be submitted.
+
+Replace the dummy code with your own code in the TODO sections.
+
+We also encourage you to use tensorboard or wandb to log the training process
+and the performance of your model. This will help you to debug your model and
+to understand how it is performing. But the template does not include this
+functionality.
+Link for wandb:
+https://docs.wandb.ai/quickstart/
+Link for tensorboard: 
+https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html
+"""
+
+# The device is automatically set to GPU if available, otherwise CPU
+# If you want to force the device to CPU, you can change the line to
+# device = torch.device("cpu")
+
+# If you have a Mac consult the following link:
+# https://pytorch.org/docs/stable/notes/mps.html
+
+# It is important that your model and all data are on the same device.
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+
+def load_data(**kwargs):
     """
-    This function loads the training and test data, preprocesses it, removes the NaN values and interpolates the missing
-    data using imputation
+    Get the training and test data. The data files are assumed to be in the
+    same directory as this script.
 
-    Parameters
-    ----------
-    Returns
-    ----------
-    X_train: matrix of floats, training input with features
-    y_train: array of floats, training output with labels
-    X_test: matrix of floats: dim = (100, ?), test input with features
+    Args:
+    - kwargs: Additional arguments that you might find useful - not necessary
+
+    Returns:
+    - train_data_input: Tensor[N_train_samples, C, H, W]
+    - train_data_label: Tensor[N_train_samples, C, H, W]
+    - test_data_input: Tensor[N_test_samples, C, H, W]
+    where N_train_samples is the number of training samples, N_test_samples is
+    the number of test samples, C is the number of channels (1 for grayscale),
+    H is the height of the image, and W is the width of the image.
     """
-    # Load training data
-    train_df = pd.read_csv(os.path.join(script_dir, "train.csv"))
+    # Load the training data
+    train_data = np.load("train_data.npz")["data"]
 
-    # Clean training data by removing rows with NaN with linear interpolation
-    # plot_df(train_df[['season', 'price_GER']])
-    train_df = fill_missing(train_df)
-    train_df = enumerate_seasons(train_df)
-    # plot_df(train_df[['season', 'price_GER']])
+    # Make the training data a tensor
+    train_data = torch.tensor(train_data, dtype=torch.float32)
+
+    # Load the test data
+    test_data_input = np.load("test_data.npz")["data"]
+
+    # Make the test data a tensor
+    test_data_input = torch.tensor(test_data_input, dtype=torch.float32)
+
+    ########################################
+    train_data_label = train_data.clone()
+    train_data_input = train_data.clone()
+
+    # From task description: Given an image of dimensions (28, 28) we set the center 8x8 pixels to black, i.e. mask them
+    # train_data_input: torch.Size([60000, 1, 28, 28])
+    train_data_input[:, :, 10:18, 10:18] = 0
+
+    # Visualize the training data if needed
+    # Set to False if you don't want to save the images
+    if True:
+        # Create the output directory if it doesn't exist
+        if not Path("train_image_output").exists():
+            Path("train_image_output").mkdir()
+        for i in tqdm(range(20), desc="Plotting train images"):
+            # Show the training and the target image side by side
+            plt.subplot(1, 2, 1)
+            plt.imshow(train_data_input[i].squeeze(), cmap="gray")
+            plt.title("Training Input")
+            plt.subplot(1, 2, 2)
+            plt.title("Training Label")
+            plt.imshow(train_data_label[i].squeeze(), cmap="gray")
+
+            plt.savefig(f"train_image_output/image_{i}.png")
+            plt.close()
+
+    return train_data_input, train_data_label, test_data_input
 
 
-    print("Training data:")
-    print("Shape:", train_df.shape)
-    print(train_df.head(2))
-    print('\n')
+def training(train_data_input, train_data_label, **kwargs):
+    """
+    Train the model. Fill in the details of the data loader, the loss function,
+    the optimizer, and the training loop.
+
+    Args:
+    - train_data_input: Tensor[N_train_samples, C, H, W]
+    - train_data_label: Tensor[N_train_samples, C, H, W]
+    - kwargs: Additional arguments that you might find useful - not necessary
+
+    Returns:
+    - model: torch.nn.Module
+    """
+    model = Model()     # Initialize the model (class: Model, subclass of torch.nn.Module).
+    model.train()       # Set the module in training mode. Switch off with model.eval().
+    model.to(device)    # Sends model to device (GPU/CPU).
+
+    criterion = torch.nn.MSELoss()                              # Loss function.
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)    # Optimizer.
     
-    # Load test data
-    test_df = pd.read_csv(os.path.join(script_dir, "test.csv"))
-
-    # Clean data
-    test_df = fill_missing(test_df)
-    test_df = enumerate_seasons(test_df)
-
-    print("Test data:")
-    print(test_df.shape)
-    print(test_df.head(2))
-
-    X_train = train_df.drop(['price_CHF'], axis=1).values
-    y_train = train_df['price_CHF'].values
-    X_test = test_df.values
-
-    print("X_train sample:")
-    print(X_train[:5])
-    
-    assert (X_train.shape[1] == X_test.shape[1]) and (X_train.shape[0] == y_train.shape[0]) and (X_test.shape[0] == 100), "Invalid data shape"
-    return X_train, y_train, X_test
+    n_epochs = 120
+    batch_size = 128                                                         # Batch size.
+    dataset = TensorDataset(train_data_input, train_data_label)             # Dataset. tuple: (x, y), x: train features, y: train labels. TensorDataset: Dataset wrapping tensors.
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs)  # ← add this
 
     
+    for epoch in range(n_epochs):
+        for x, y in tqdm(
+            data_loader, desc=f"Training Epoch {epoch}", leave=False
+        ): # tqdm() shows a progress bar. Loop: n=batch_size gradient descent steps per epoch.
+            x, y = x.to(device), y.to(device)
+            optimizer.zero_grad()
+            output = model(x)
+            loss = criterion(output, y)
+            loss.backward()
+            optimizer.step()
+        scheduler.step() 
+        print(f"Epoch {epoch} loss: {loss.item()}")
 
-# Plot df
-def plot_df(df_import):
-
-    # Data format: 
-    # x: ['season': ['spring','summer','autumn','winter','spring',...]
-    # y: ['price_XXX': [<float>, <float>, <float>, <float>, <float>, ...]]
-        # each XXX corresponds to a different country (and column) and should be plotted as a different line in the same plot. You can use the column names to identify which country each line corresponds to.
-    import matplotlib.pyplot as plt
-
-    plt.figure(figsize=(12, 6))
-    x_axis = range(len(df_import))
-    for col in df_import.columns:
-        if col != 'season':
-            plt.plot(x_axis, df_import[col], marker='o', label=col)
-    plt.xlabel('Time (all rows)')
-    plt.ylabel('Price')
-    plt.legend()
-    plt.grid(True)
-    plt.show()
-    return plt
+    return model
 
 
-# Enumerate seasons: [spring, summer, autumn, winter,....] -> [0, 1, 2, 3...]
-def enumerate_seasons(df_import):
-    df = df_import.copy()
-    season_map = {
-        'spring': 0,
-        'summer': 1,
-        'autumn': 2,
-        'winter': 3
-    }
-    df['season'] = df['season'].map(season_map).astype(float)
-    return df
+# TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
+# change this model - and are encouraged to do so.
+class Model(nn.Module): # subclass of PyTorch class "Module" https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html
+    """
+    Implement your model here.
+    """
 
-
-
-# Fill NaN values with previous 
-def fill_missing(df_import):
-    df = df_import.copy()
-
-    for col in df.columns:
-        for i in range(len(df)):
-            if pd.isna(df.loc[i, col]):
-                # If first row, fill with next non-NaN value
-                if i == 0:
-                    for j in range(i+1, len(df)):
-                        if not pd.isna(df.loc[j, col]):
-                            df.loc[i, col] = df.loc[j, col]
-                            break
-                else:
-                    # Fill NaN with linear interp between previous and next non-NaN values
-                    prev_value = df.loc[i-1, col]
-                    next_value = None
-                    for j in range(i+1, len(df)):
-                        if not pd.isna(df.loc[j, col]):
-                            next_value = df.loc[j, col]
-                            break
-                    if next_value is not None:
-                        if pd.isna(prev_value):
-                            prev_value = next_value
-                        df.loc[i, col] = (prev_value + next_value) / 2
-                    else:
-                        df.loc[i, col] = prev_value
-    return df
-
-class Model(object):
-    def _init_(self):
-        super()._init_()
-        self._x_train = None
-        self._y_train = None
-        self.model = None
-
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray):
-        self._x_train = X_train
-        self._y_train = y_train
-
-        kernel = (
-            RBF(length_scale=10.0, length_scale_bounds=(1, 1e3)) + # Force a longer scale
-            WhiteKernel(noise_level=1, noise_level_bounds=(1e-2, 1.0)) # Account for noise
-        )
-
-        self.model = GaussianProcessRegressor(
-            kernel=kernel,
-            alpha=1e-6,
-            normalize_y=True,
-            n_restarts_optimizer=10
-        )
-        self.model.fit(X_train, y_train)
-
-    def predict(self, X_test: np.ndarray) -> np.ndarray:
-        y_pred = self.model.predict(X_test)
-        y_pred = np.asarray(y_pred).reshape(-1)
-        assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
-        return y_pred
-    
-    def plot_fit(self):
-        if self.model is None:
-            raise ValueError("Model has not been fitted yet.")
-
-        y_mean, y_std = self.model.predict(self._x_train, return_std=True)
-
-        x_axis = np.arange(len(self._y_train))
-
-        plt.figure(figsize=(12, 6))
-        plt.plot(x_axis, self._y_train, 'k.', markersize=4, label='Training data')
-        plt.plot(x_axis, y_mean, label='GP mean prediction')
-        plt.fill_between(
-            x_axis,
-            y_mean - 1.96 * y_std,
-            y_mean + 1.96 * y_std,
-            alpha=0.2,
-            label='95% confidence interval'
-        )
-        plt.xlabel("Training index")
-        plt.ylabel("price_CHF")
-        plt.title("Gaussian Process fit on training data")
-        plt.legend()
-        plt.grid(True)
-        plt.show()
-
-class Model2(object): # Squared exponential (RBF) kernel
     def __init__(self):
+        """
+        The constructor of the model.
+        """
         super().__init__()
-        self._x_train = None
-        self._y_train = None
-        self._weights = None
-        self._tau = 1.0
+        self.fc = nn.Sequential(
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU()
+        )
 
-    def fit(self, X_train: np.ndarray, y_train: np.ndarray):
-        # Define the model and fit it using (X_train, y_train)
-        # Training data and size
-        self._x_train = X_train
-        self._y_train = y_train
-        n = self._x_train.shape[0]
-        # 1) Reparametrization
-        alpha = np.zeros(n)
-        # 2) Kernelization
-        K = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                K[i, j] = np.exp(-np.linalg.norm((self._x_train[i,:]-self._x_train[j,:]))**2/self._tau)
-        # 3) Compute
-        # STEEPEST DESCENT
-        # Parameters
-        nu = 0.7
-        tol = 0.00000001
-        t_max = 100000
-        # 1. Start
-        # alpha = np.zeros(self._x_train.shape[0])
-        L = np.linalg.norm((self._y_train-K@alpha))**2/n
-        delta_L = L
-        t = 0
-        # 2. Iterate
-        while t < t_max and delta_L > tol:
-            delta_L = L
-            delL_delw = (2*K.T@K@alpha-2*K.T@self._y_train)/n
-            alpha = alpha-nu*delL_delw
-            L = np.linalg.norm((self._y_train-K@alpha))**2/n
-            print(t, L)
-            delta_L = delta_L - L
-            t=t+1
-        # 4) Revert reparametrization
-        self._weights = alpha
+    def forward(self, x):
+        """
+        The forward pass of the model.
+
+        input: x: torch.Tensor, the input to the model
+
+        output: x: torch.Tensor, the output of the model
+        """
+        # Flatten the image in the last two dimensions
+        x = x.view(x.shape[0], -1)
+        x = self.fc(x)
+        # Reshape the image to the original shape
+        x = x.view(x.shape[0], 1, 28, 28)
+        return x
 
 
-    def predict(self, X_test: np.ndarray) -> np.ndarray:
-        # Use the model to make predictions y_pred using test data X_test
-        m = X_test.shape[0]
-        n = self._x_train.shape[0]
-        K = np.zeros((m, n))
-        for i in range(m):
-            for j in range(n):
-                K[i, j] = np.exp(-np.linalg.norm((X_test[i,:]-self._x_train[j,:]))**2/self._tau)
-        y_pred = K@self._weights
-        assert y_pred.shape == (X_test.shape[0],), "Invalid data shape"
-        return y_pred
+def testing(model, test_data_input):
+    """
+    Uses your model to predict the ouputs for the test data. Saves the outputs
+    as a binary file. This file needs to be submitted. This function does not
+    need to be modified except for setting the batch_size value. If you choose
+    to modify it otherwise, please ensure that the generating and saving of the
+    output data is not modified.
 
-# Main function. You don't have to change this
+    Args:
+    - model: torch.nn.Module
+    - test_data_input: Tensor
+    """
+    model.eval()
+    model.to(device)
+
+    with torch.no_grad():
+        test_data_input = test_data_input.to(device)
+        # Predict the output batch-wise to avoid memory issues
+        test_data_output = []
+        # TODO: You can increase or decrease this batch size depending on your
+        # memory requirements of your computer / model
+        # This will not affect the performance of the model and your score
+        batch_size = 32
+        for i in tqdm(
+            range(0, test_data_input.shape[0], batch_size),
+            desc="Predicting test output",
+        ):
+            output = model(test_data_input[i : i + batch_size])
+            test_data_output.append(output.cpu())
+        test_data_output = torch.cat(test_data_output)
+
+    # Ensure the output has the correct shape
+    assert test_data_output.shape == test_data_input.shape, (
+        f"Expected shape {test_data_input.shape}, but got "
+        f"{test_data_output.shape}."
+        "Please ensure the output has the correct shape."
+        "Without the correct shape, the submission cannot be evaluated and "
+        "will hence not be valid."
+    )
+
+    # Save the output
+    test_data_output = test_data_output.numpy()
+    # Ensure all values are in the range [0, 255]
+    save_data_clipped = np.clip(test_data_output, 0, 255)
+    # Convert to uint8
+    # Ensure your model outputs values in the [0, 255] range before this step! If you normalized your data to [0, 1], you must multiply by 255 before saving.
+    save_data_uint8 = save_data_clipped.astype(np.uint8)
+    # Loss is only computed on the masked area - so set the rest to 0 to save
+    # space
+    save_data = np.zeros_like(save_data_uint8)
+    save_data[:, :, 10:18, 10:18] = save_data_uint8[:, :, 10:18, 10:18]
+
+    np.savez_compressed(
+        "submit_this_test_data_output.npz", data=save_data)
+
+    # You can plot the output if you want
+    # Set to False if you don't want to save the images
+    if True:
+        # Create the output directory if it doesn't exist
+        if not Path("test_image_output").exists():
+            Path("test_image_output").mkdir()
+        for i in tqdm(range(20), desc="Plotting test images"):
+            # Show the training and the target image side by side
+            plt.subplot(1, 2, 1)
+            plt.title("Test Input")
+            plt.imshow(test_data_input[i].squeeze().cpu().numpy(), cmap="gray")
+            plt.subplot(1, 2, 2)
+            plt.imshow(test_data_output[i].squeeze(), cmap="gray")
+            plt.title("Test Output")
+
+            plt.savefig(f"test_image_output/image_{i}.png")
+            plt.close()
+
+
+def main():
+    seed = 0
+    # Reproducibility
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    torch.backends.cudnn.deterministic = True
+
+    # You don't need to change the code below
+    # Load the data
+    train_data_input, train_data_label, test_data_input = load_data()
+    # Train the model
+    model = training(train_data_input, train_data_label)
+
+    # Test the model (this also generates the submission file)
+    # The name of the submission file is submit_this_test_data_output.npz
+    testing(model, test_data_input)
+
+    return None
+
+
 if __name__ == "__main__":
-    # Data loading
-    X_train, y_train, X_test = load_data()
-    # # Cross validation
-    # # cross_validate_model(X_train, y_train)
-    # model = Model()
-    # # Use this function to fit the model
-    # model.fit(X_train=X_train, y_train=y_train)
-    # # Use this function to visualize the fit of the model on the training data
-    # model.plot_fit()
-    # # Use this function for inference
-    # y_pred = model.predict(X_test)
-    # MODEL 2
-    model = Model2()
-    model._tau = 1
-    model.fit(X_train=X_train, y_train=y_train)
-    y_pred = model.predict(X_test)
-    # Save results in the required format
-    dt = pd.DataFrame(y_pred) 
-    dt.columns = ['price_CHF']
-    dt.to_csv('results.csv', index=False)
-    print("\nResults file successfully generated!")
+    main()
