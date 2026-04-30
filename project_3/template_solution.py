@@ -112,6 +112,7 @@ def training(train_data_input, train_data_label, **kwargs):
     model.train()       # Set the module in training mode. Switch off with model.eval().
     model.to(device)    # Sends model to device (GPU/CPU).
 
+<<<<<<< HEAD
 
     n_epochs = 40
 
@@ -124,6 +125,16 @@ def training(train_data_input, train_data_label, **kwargs):
     data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
 
     
+=======
+    criterion = torch.nn.MSELoss()                              # Loss function.
+    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)    # Optimizer.
+
+    batch_size = 32                                                         # Batch size.
+    dataset = TensorDataset(train_data_input, train_data_label)             # Dataset. tuple: (x, y), x: train features, y: train labels. TensorDataset: Dataset wrapping tensors.
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
+
+    n_epochs = 30
+>>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
     for epoch in range(n_epochs):
         for x, y in tqdm(
             data_loader, desc=f"Training Epoch {epoch}", leave=False
@@ -134,7 +145,11 @@ def training(train_data_input, train_data_label, **kwargs):
             loss = criterion(output, y)
             loss.backward()
             optimizer.step()
+<<<<<<< HEAD
         #scheduler.step()        
+=======
+
+>>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
         print(f"Epoch {epoch} loss: {loss.item()}")
 
     return model
@@ -142,6 +157,7 @@ def training(train_data_input, train_data_label, **kwargs):
 
 # TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
 # change this model - and are encouraged to do so.
+<<<<<<< HEAD
 class Model(nn.Module):
     def __init__(self):
         super().__init__()
@@ -163,6 +179,43 @@ class Model(nn.Module):
         x = x.view(x.shape[0], 1, 28, 28)
         return x
 
+=======
+class Model(nn.Module): # subclass of PyTorch class "Module" https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html
+    """
+    Implement your model here.
+    """
+
+    def __init__(self):
+        """
+        The constructor of the model.
+        """
+        super().__init__()
+        self.fc = nn.Sequential(
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU(),
+            nn.Linear(784, 784),
+            nn.ReLU()
+        )
+
+    def forward(self, x):
+        """
+        The forward pass of the model.
+
+        input: x: torch.Tensor, the input to the model
+
+        output: x: torch.Tensor, the output of the model
+        """
+        # Flatten the image in the last two dimensions
+        x = x.view(x.shape[0], -1)
+        x = self.fc(x)
+        # Reshape the image to the original shape
+        x = x.view(x.shape[0], 1, 28, 28)
+        return x
+
+
+>>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
 def testing(model, test_data_input):
     """
     Uses your model to predict the ouputs for the test data. Saves the outputs
