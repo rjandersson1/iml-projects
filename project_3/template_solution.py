@@ -67,10 +67,6 @@ def load_data(**kwargs):
     test_data_input = torch.tensor(test_data_input, dtype=torch.float32)
 
     ########################################
-    # TODO: Given the original training images, create the input images and the
-    # label images to train your model. 
-    # Replace the two placholder lines below (which currently just copy the
-    # training data) with your own implementation.
     train_data_label = train_data.clone()
     train_data_input = train_data.clone()
 
@@ -98,94 +94,121 @@ def load_data(**kwargs):
 
     return train_data_input, train_data_label, test_data_input
 
-
 def training(train_data_input, train_data_label, **kwargs):
-    """
-    Train the model. Fill in the details of the data loader, the loss function,
-    the optimizer, and the training loop.
-
-    Args:
-    - train_data_input: Tensor[N_train_samples, C, H, W]
-    - train_data_label: Tensor[N_train_samples, C, H, W]
-    - kwargs: Additional arguments that you might find useful - not necessary
-
-    Returns:
-    - model: torch.nn.Module
-    """
     model = Model()
-    model.train()
-    model.to(device)
+    model.to(device) # Move once at the start
 
-    # TODO: Dummy criterion - change this to the correct loss function
-    # https://pytorch.org/docs/stable/nn.html#loss-functions
-    criterion = lambda x, y: torch.mean((x))
-    # TODO: Dummy optimizer - change this to a more suitable optimizer
-    optimizer = torch.optim.SGD(model.parameters())
+    criterion = torch.nn.MSELoss()
+    # criterion = torch.nn.L1Loss()
+    # optimizer = torch.optim.SGD(model.parameters(), lr=5*1e-5, momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=5*1e-4)
 
-    # TODO: Correctly setup the dataloader - the below is just a placeholder
-    # Also consider that you might not want to use the entire dataset for
-    # training alone
-    # (batch_size needs to be changed)
-    batch_size = 1
-    dataset = TensorDataset(train_data_input, train_data_label)
-    # Consider the shuffle parameter and other parameters of the DataLoader
-    # class (see
-    # https://pytorch.org/docs/stable/data.html#torch.utils.data.DataLoader)
-    data_loader = DataLoader(dataset, batch_size=batch_size)
+    # Dataset Splitting
+    batch_size = 32
+    total_samples = train_data_input.size(0)
+    split_idx = total_samples - batch_size
 
-    # Training loop
-    # TODO: Modify the training loop in case you need to
+    train_dataset = TensorDataset(train_data_input[:split_idx], train_data_label[:split_idx])
+    val_dataset = TensorDataset(train_data_input[split_idx:], train_data_label[split_idx:])
 
-    # TODO: The value of n_epochs is just a placeholder and likely needs to be
-    # changed
-    n_epochs = 1
+    data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    
+    # Pre-prepare validation tensors on device to avoid doing it every epoch
+    val_x = val_dataset.tensors[0].to(device)
+    val_y = val_dataset.tensors[1].to(device)
 
+    # Training history for plotting
+    train_loss_history = []
+    val_loss_history = []
+
+    n_epochs = 20
     for epoch in range(n_epochs):
-        for x, y in tqdm(
-            data_loader, desc=f"Training Epoch {epoch}", leave=False
-        ):
+        model.train() # Set to train at start of epoch
+        train_loss = 0.0
+        
+        for x, y in tqdm(data_loader, desc=f"Epoch {epoch}", leave=False):
             x, y = x.to(device), y.to(device)
+            
             optimizer.zero_grad()
             output = model(x)
             loss = criterion(output, y)
             loss.backward()
             optimizer.step()
+            train_loss = loss.item() # Keep track of the last training loss
 
-        print(f"Epoch {epoch} loss: {loss.item()}")
+        # 2. VALIDATION STEP
+        model.eval() 
+        with torch.no_grad():
+            val_output = model(val_x)
+            val_loss = criterion(val_output, val_y).item()
 
+        print(f"Epoch {epoch} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+
+        # 3. PLOT THE RESULTS
+        title = "full_padding"
+        train_loss_history.append(train_loss)
+        val_loss_history.append(val_loss)
+        plt.figure(figsize=(10, 6))
+        plt.plot(train_loss_history, label='Training Loss', color='blue', linewidth=2)
+        plt.plot(val_loss_history, label='Validation Loss', color='red', linestyle='--', linewidth=2)
+        plt.title(f'Model Loss Progression (MSE) - {title}')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True, linestyle=':', alpha=0.7)
+        plt.savefig(f'loss_plot_{title}.png')
+    
     return model
 
-
-# TODO: define a model. Here, a basic MLP model is defined. You can completely
-# change this model - and are encouraged to do so.
 class Model(nn.Module):
-    """
-    Implement your model here.
-    """
-
     def __init__(self):
-        """
-        The constructor of the model.
-        """
         super().__init__()
-        self.fc = nn.Linear(784, 784)
+
+        # 1. Feature Extraction (Padding)
+        self.feature_extractor = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7, stride=2, padding=5),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=3),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(32, 1, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(1),
+            nn.LeakyReLU(0.1)
+        )
+
+        # 2. Regression Layers (Input size is now 12*12 = 144)
+        self.regressor = nn.Sequential(
+            nn.Linear(324, 784) # Output stays 784 to reconstruct 28x28
+        )
+        
+        self.regressor2 = nn.Sequential(
+            nn.Linear(784, 784) # Additional layer for more complex transformations
+        )
 
     def forward(self, x):
-        """
-        The forward pass of the model.
+        x_old = x.clone()
 
-        input: x: torch.Tensor, the input to the model
+        x = self.feature_extractor(x)
 
-        output: x: torch.Tensor, the output of the model
-        """
-        # Flatten the image in the last two dimensions
-        x = x.view(x.shape[0], -1)
-        x = self.fc(x)
-        x = F.relu(x)
-        # Reshape the image to the original shape
-        x = x.view(x.shape[0], 1, 28, 28)
+        # Flatten for Regression
+        x = x.view(x.size(0), -1)
+        x = self.regressor(x)
+        x = x.view(x.size(0), 1, 28, 28)
+
+        # 2. Transpose to prioritize columns
+        x = x.transpose(2, 3).contiguous() 
+        x = x.view(x.size(0), -1)
+        x = self.regressor2(x)
+        x = x.view(x.size(0), 1, 28, 28)
+        x = x.transpose(2, 3).contiguous()
+
+        x = x + x_old
+
         return x
-
 
 def testing(model, test_data_input):
     """
@@ -209,7 +232,7 @@ def testing(model, test_data_input):
         # TODO: You can increase or decrease this batch size depending on your
         # memory requirements of your computer / model
         # This will not affect the performance of the model and your score
-        batch_size = 64
+        batch_size = 32
         for i in tqdm(
             range(0, test_data_input.shape[0], batch_size),
             desc="Predicting test output",
