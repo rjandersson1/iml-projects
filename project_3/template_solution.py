@@ -163,22 +163,6 @@ def training(train_data_input, train_data_label, **kwargs):
 class Model(nn.Module):
     def __init__(self):
         super().__init__()
-        
-        # # 1. Feature Extraction (No Padding/reduced padding)
-        # self.feature_extractor = nn.Sequential(
-        #     nn.Conv2d(1, 32, kernel_size=7, stride=2, padding=3),
-        #     nn.BatchNorm2d(32),
-        #     nn.LeakyReLU(0.1),
-        #     nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1),
-        #     nn.BatchNorm2d(64),
-        #     nn.LeakyReLU(0.1),
-        #     nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=0),
-        #     nn.BatchNorm2d(32),
-        #     nn.LeakyReLU(0.1),
-        #     nn.Conv2d(32, 1, kernel_size=3, stride=1, padding=0),
-        #     nn.BatchNorm2d(1),
-        #     nn.LeakyReLU(0.1)
-        # )
 
         # 1. Feature Extraction (Padding)
         self.feature_extractor = nn.Sequential(
@@ -225,106 +209,6 @@ class Model(nn.Module):
         x = x + x_old
 
         return x
-
-# # TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
-# # change this model - and are encouraged to do so.
-# class Model(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-        
-#         # 1. Feature Extraction: 28x28 -> 28x28
-#         self.feature_extractor = nn.Sequential(
-#             nn.Conv2d(in_channels=1, out_channels=16, kernel_size=7, stride=1, padding=3),
-#             nn.BatchNorm2d(16),
-#             nn.LeakyReLU(0.1),
-#             nn.Conv2d(in_channels=16, out_channels=30, kernel_size=5, stride=1, padding=2),
-#             # nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2),
-#             nn.BatchNorm2d(30),
-#             nn.LeakyReLU(0.1),
-#             nn.Conv2d(in_channels=30, out_channels=16, kernel_size=3, stride=1, padding=1),
-#             nn.BatchNorm2d(16),
-#             nn.LeakyReLU(0.1),
-#         )
-
-#         # 2. Laplacian Boundary Filter: 28x28 -> 28x28
-#         self.laplacian_filter = nn.Sequential(
-#             nn.Conv2d(in_channels=16, out_channels=1, kernel_size=3, stride=1, padding=1),
-#         )
-
-#         # 3. 3x3 Sharpening Filter: 28x28 -> 28x28
-#         # kernel_size=3 with padding=1 keeps dimensions at 28x28 perfectly.
-#         self.sharpening_filter = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=1)
-
-#         # 4. Regression Layers
-#         # Input is exactly 28*28 = 784
-#         self.regressor = nn.Sequential(
-#             # 1.
-#             # nn.Linear(784, 784),
-#             # nn.ReLU(),
-#             # 2.
-#             nn.Linear(784, 2048),
-#             nn.BatchNorm1d(2048),
-#             nn.LeakyReLU(0.1),
-#             nn.Linear(2048, 784)
-#             # 3.
-#             # nn.Linear(784, 1024),
-#             # nn.BatchNorm1d(1024),
-#             # nn.LeakyReLU(0.1),
-#             # nn.Linear(1024, 784)
-#         )
-
-#         self._initialize_fixed_filters()
-
-#     def _initialize_fixed_filters(self):
-#         # Laplacian Kernel (Fixed)
-#         laplacian_kernel = 2.0 * torch.tensor([[ 0.,  1.,  0.],
-#                                                [ 1., -4.,  1.],
-#                                                [ 0.,  1.,  0.]])
-        
-#         # 3x3 Sharpening Kernel (Fixed)
-#         # Using the classic "plus" sharpening pattern multiplied by 4 as before
-#         sharpen_3x3 = 3.0 * torch.tensor([[ 0., -1.,  0.],
-#                                           [-1.,  5., -1.],
-#                                           [ 0., -1.,  0.]]) / 5.0 # Normalized to sum ~4
-        
-#         with torch.no_grad():
-#             # Apply Laplacian
-#             for i in range(8):
-#                 self.laplacian_filter[0].weight[0, i] = laplacian_kernel
-#             self.laplacian_filter[0].bias.fill_(0)
-            
-#             # Apply Sharpening
-#             self.sharpening_filter.weight[0, 0] = sharpen_3x3
-#             self.sharpening_filter.bias.fill_(0)
-            
-#         # Freeze both
-#         self.laplacian_filter[0].weight.requires_grad = False
-#         self.sharpening_filter.weight.requires_grad = False
-
-#     def forward(self, x):
-#         # x_old = x.clone() # Keep a copy of the original input for skip connection
-
-#         # Convolutional Pre-processing
-#         x = self.feature_extractor(x)  # Result: 28x28
-#         x = self.laplacian_filter(x)   # Result: 28x28
-#         x = self.sharpening_filter(x)  # Result: 28x28
-        
-#         # x += x_old # Skip connection to original input
-
-#         x_old = x.clone()
-
-#         # Flatten for Regression
-#         x = x.view(x.size(0), -1)      # Flatten to 784
-        
-#         # Regress
-#         x = self.regressor(x)
-        
-#         # Final Reshape
-#         x = x.view(x.size(0), 1, 28, 28)
-        
-#         x += x_old # Skip connection to original input
-
-#         return x
 
 def testing(model, test_data_input):
     """
