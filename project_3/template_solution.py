@@ -94,128 +94,238 @@ def load_data(**kwargs):
 
     return train_data_input, train_data_label, test_data_input
 
-
 def training(train_data_input, train_data_label, **kwargs):
-    """
-    Train the model. Fill in the details of the data loader, the loss function,
-    the optimizer, and the training loop.
+    model = Model()
+    model.to(device) # Move once at the start
 
-    Args:
-    - train_data_input: Tensor[N_train_samples, C, H, W]
-    - train_data_label: Tensor[N_train_samples, C, H, W]
-    - kwargs: Additional arguments that you might find useful - not necessary
+    criterion = torch.nn.MSELoss()
+    # criterion = torch.nn.L1Loss()
+    # optimizer = torch.optim.SGD(model.parameters(), lr=5*1e-5, momentum=0.9)
+    optimizer = torch.optim.Adam(model.parameters(), lr=5*1e-4)
 
-    Returns:
-    - model: torch.nn.Module
-    """
-    model = Model()     # Initialize the model (class: Model, subclass of torch.nn.Module).
-    model.train()       # Set the module in training mode. Switch off with model.eval().
-    model.to(device)    # Sends model to device (GPU/CPU).
+    # Dataset Splitting
+    batch_size = 32
+    total_samples = train_data_input.size(0)
+    split_idx = total_samples - batch_size
 
-<<<<<<< HEAD
+    train_dataset = TensorDataset(train_data_input[:split_idx], train_data_label[:split_idx])
+    val_dataset = TensorDataset(train_data_input[split_idx:], train_data_label[split_idx:])
 
-    n_epochs = 40
-
-    criterion = torch.nn.MSELoss()                              # Loss function.
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4, weight_decay=1e-5)
-    #scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=n_epochs)# Optimizer.
-
-    batch_size = 64                                                        # Batch size.
-    dataset = TensorDataset(train_data_input, train_data_label)             # Dataset. tuple: (x, y), x: train features, y: train labels. TensorDataset: Dataset wrapping tensors.
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
-
+    data_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
-=======
-    criterion = torch.nn.MSELoss()                              # Loss function.
-    optimizer = torch.optim.SGD(model.parameters(), lr=1e-4)    # Optimizer.
+    # Pre-prepare validation tensors on device to avoid doing it every epoch
+    val_x = val_dataset.tensors[0].to(device)
+    val_y = val_dataset.tensors[1].to(device)
 
-    batch_size = 32                                                         # Batch size.
-    dataset = TensorDataset(train_data_input, train_data_label)             # Dataset. tuple: (x, y), x: train features, y: train labels. TensorDataset: Dataset wrapping tensors.
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)  # DataLoader. class, iterable: ((x, y), (x, y), ...). Splits the dataset into 1875 batches of size 32. Shuffle: reshuffles the data at every epoch.
+    # Training history for plotting
+    train_loss_history = []
+    val_loss_history = []
 
-    n_epochs = 30
->>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
+    n_epochs = 20
     for epoch in range(n_epochs):
-        for x, y in tqdm(
-            data_loader, desc=f"Training Epoch {epoch}", leave=False
-        ): # tqdm() shows a progress bar. Loop: n=batch_size gradient descent steps per epoch.
+        model.train() # Set to train at start of epoch
+        train_loss = 0.0
+        
+        for x, y in tqdm(data_loader, desc=f"Epoch {epoch}", leave=False):
             x, y = x.to(device), y.to(device)
+            
             optimizer.zero_grad()
             output = model(x)
             loss = criterion(output, y)
             loss.backward()
             optimizer.step()
-<<<<<<< HEAD
-        #scheduler.step()        
-=======
+            train_loss = loss.item() # Keep track of the last training loss
 
->>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
-        print(f"Epoch {epoch} loss: {loss.item()}")
+        # 2. VALIDATION STEP
+        model.eval() 
+        with torch.no_grad():
+            val_output = model(val_x)
+            val_loss = criterion(val_output, val_y).item()
 
+        print(f"Epoch {epoch} | Train Loss: {train_loss:.6f} | Val Loss: {val_loss:.6f}")
+
+        # 3. PLOT THE RESULTS
+        title = "full_padding"
+        train_loss_history.append(train_loss)
+        val_loss_history.append(val_loss)
+        plt.figure(figsize=(10, 6))
+        plt.plot(train_loss_history, label='Training Loss', color='blue', linewidth=2)
+        plt.plot(val_loss_history, label='Validation Loss', color='red', linestyle='--', linewidth=2)
+        plt.title(f'Model Loss Progression (MSE) - {title}')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True, linestyle=':', alpha=0.7)
+        plt.savefig(f'loss_plot_{title}.png')
+    
     return model
 
-
-# TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
-# change this model - and are encouraged to do so.
-<<<<<<< HEAD
 class Model(nn.Module):
     def __init__(self):
         super().__init__()
-        # Input is 784 + 784 (x²) = 1568
-        self.fc = nn.Sequential(
-            nn.Linear(784 * 2, 1024),
-            nn.ReLU(),
-            nn.Linear(1024, 1024),
-            nn.ReLU(),
-            nn.Linear(1024, 784),
-            nn.ReLU(),
-            nn.Linear(784, 784),
+        
+        # # 1. Feature Extraction (No Padding/reduced padding)
+        # self.feature_extractor = nn.Sequential(
+        #     nn.Conv2d(1, 32, kernel_size=7, stride=2, padding=3),
+        #     nn.BatchNorm2d(32),
+        #     nn.LeakyReLU(0.1),
+        #     nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=1),
+        #     nn.BatchNorm2d(64),
+        #     nn.LeakyReLU(0.1),
+        #     nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=0),
+        #     nn.BatchNorm2d(32),
+        #     nn.LeakyReLU(0.1),
+        #     nn.Conv2d(32, 1, kernel_size=3, stride=1, padding=0),
+        #     nn.BatchNorm2d(1),
+        #     nn.LeakyReLU(0.1)
+        # )
+
+        # 1. Feature Extraction (Padding)
+        self.feature_extractor = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7, stride=2, padding=5),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=3),
+            nn.BatchNorm2d(64),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(64, 32, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(32),
+            nn.LeakyReLU(0.1),
+            nn.Conv2d(32, 1, kernel_size=3, stride=1, padding=1),
+            nn.BatchNorm2d(1),
+            nn.LeakyReLU(0.1)
+        )
+
+        # 2. Regression Layers (Input size is now 12*12 = 144)
+        self.regressor = nn.Sequential(
+            nn.Linear(324, 784) # Output stays 784 to reconstruct 28x28
+        )
+        
+        self.regressor2 = nn.Sequential(
+            nn.Linear(784, 784) # Additional layer for more complex transformations
         )
 
     def forward(self, x):
-        x = x.view(x.shape[0], -1)
-        x = torch.cat([x, x ** 2], dim=1)  # only x², skip sin to avoid overfitting
-        x = self.fc(x)
-        x = x.view(x.shape[0], 1, 28, 28)
+        x_old = x.clone()
+
+        x = self.feature_extractor(x)
+
+        # Flatten for Regression
+        x = x.view(x.size(0), -1)
+        x = self.regressor(x)
+        x = x.view(x.size(0), 1, 28, 28)
+
+        # 2. Transpose to prioritize columns
+        x = x.transpose(2, 3).contiguous() 
+        x = x.view(x.size(0), -1)
+        x = self.regressor2(x)
+        x = x.view(x.size(0), 1, 28, 28)
+        x = x.transpose(2, 3).contiguous()
+
+        x = x + x_old
+
         return x
 
-=======
-class Model(nn.Module): # subclass of PyTorch class "Module" https://docs.pytorch.org/docs/stable/generated/torch.nn.Module.html
-    """
-    Implement your model here.
-    """
+# # TODO: define a model. Here, a basic MLP model (fully connected NN) is defined. You can completely
+# # change this model - and are encouraged to do so.
+# class Model(nn.Module):
+#     def __init__(self):
+#         super().__init__()
+        
+#         # 1. Feature Extraction: 28x28 -> 28x28
+#         self.feature_extractor = nn.Sequential(
+#             nn.Conv2d(in_channels=1, out_channels=16, kernel_size=7, stride=1, padding=3),
+#             nn.BatchNorm2d(16),
+#             nn.LeakyReLU(0.1),
+#             nn.Conv2d(in_channels=16, out_channels=30, kernel_size=5, stride=1, padding=2),
+#             # nn.Conv2d(in_channels=1, out_channels=16, kernel_size=5, stride=1, padding=2),
+#             nn.BatchNorm2d(30),
+#             nn.LeakyReLU(0.1),
+#             nn.Conv2d(in_channels=30, out_channels=16, kernel_size=3, stride=1, padding=1),
+#             nn.BatchNorm2d(16),
+#             nn.LeakyReLU(0.1),
+#         )
 
-    def __init__(self):
-        """
-        The constructor of the model.
-        """
-        super().__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(784, 784),
-            nn.ReLU(),
-            nn.Linear(784, 784),
-            nn.ReLU(),
-            nn.Linear(784, 784),
-            nn.ReLU()
-        )
+#         # 2. Laplacian Boundary Filter: 28x28 -> 28x28
+#         self.laplacian_filter = nn.Sequential(
+#             nn.Conv2d(in_channels=16, out_channels=1, kernel_size=3, stride=1, padding=1),
+#         )
 
-    def forward(self, x):
-        """
-        The forward pass of the model.
+#         # 3. 3x3 Sharpening Filter: 28x28 -> 28x28
+#         # kernel_size=3 with padding=1 keeps dimensions at 28x28 perfectly.
+#         self.sharpening_filter = nn.Conv2d(in_channels=1, out_channels=1, kernel_size=3, stride=1, padding=1)
 
-        input: x: torch.Tensor, the input to the model
+#         # 4. Regression Layers
+#         # Input is exactly 28*28 = 784
+#         self.regressor = nn.Sequential(
+#             # 1.
+#             # nn.Linear(784, 784),
+#             # nn.ReLU(),
+#             # 2.
+#             nn.Linear(784, 2048),
+#             nn.BatchNorm1d(2048),
+#             nn.LeakyReLU(0.1),
+#             nn.Linear(2048, 784)
+#             # 3.
+#             # nn.Linear(784, 1024),
+#             # nn.BatchNorm1d(1024),
+#             # nn.LeakyReLU(0.1),
+#             # nn.Linear(1024, 784)
+#         )
 
-        output: x: torch.Tensor, the output of the model
-        """
-        # Flatten the image in the last two dimensions
-        x = x.view(x.shape[0], -1)
-        x = self.fc(x)
-        # Reshape the image to the original shape
-        x = x.view(x.shape[0], 1, 28, 28)
-        return x
+#         self._initialize_fixed_filters()
 
+#     def _initialize_fixed_filters(self):
+#         # Laplacian Kernel (Fixed)
+#         laplacian_kernel = 2.0 * torch.tensor([[ 0.,  1.,  0.],
+#                                                [ 1., -4.,  1.],
+#                                                [ 0.,  1.,  0.]])
+        
+#         # 3x3 Sharpening Kernel (Fixed)
+#         # Using the classic "plus" sharpening pattern multiplied by 4 as before
+#         sharpen_3x3 = 3.0 * torch.tensor([[ 0., -1.,  0.],
+#                                           [-1.,  5., -1.],
+#                                           [ 0., -1.,  0.]]) / 5.0 # Normalized to sum ~4
+        
+#         with torch.no_grad():
+#             # Apply Laplacian
+#             for i in range(8):
+#                 self.laplacian_filter[0].weight[0, i] = laplacian_kernel
+#             self.laplacian_filter[0].bias.fill_(0)
+            
+#             # Apply Sharpening
+#             self.sharpening_filter.weight[0, 0] = sharpen_3x3
+#             self.sharpening_filter.bias.fill_(0)
+            
+#         # Freeze both
+#         self.laplacian_filter[0].weight.requires_grad = False
+#         self.sharpening_filter.weight.requires_grad = False
 
->>>>>>> parent of 2ad1180 (Convoluted Neural Networks attempt 5)
+#     def forward(self, x):
+#         # x_old = x.clone() # Keep a copy of the original input for skip connection
+
+#         # Convolutional Pre-processing
+#         x = self.feature_extractor(x)  # Result: 28x28
+#         x = self.laplacian_filter(x)   # Result: 28x28
+#         x = self.sharpening_filter(x)  # Result: 28x28
+        
+#         # x += x_old # Skip connection to original input
+
+#         x_old = x.clone()
+
+#         # Flatten for Regression
+#         x = x.view(x.size(0), -1)      # Flatten to 784
+        
+#         # Regress
+#         x = self.regressor(x)
+        
+#         # Final Reshape
+#         x = x.view(x.size(0), 1, 28, 28)
+        
+#         x += x_old # Skip connection to original input
+
+#         return x
+
 def testing(model, test_data_input):
     """
     Uses your model to predict the ouputs for the test data. Saves the outputs
